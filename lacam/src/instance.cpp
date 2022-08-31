@@ -91,3 +91,19 @@ bool Instance::is_valid(const int verbose) const
   }
   return true;
 }
+
+void println(Solution& solution)
+{
+  auto N = solution.front().size();
+  for (auto i = 0; i < N; ++i) {
+    std::cout << i << ":";
+    for (auto&& C : solution) std::cout << C[i]->index << "->";
+    std::cout << std::endl;
+  }
+}
+
+void println(Config& config)
+{
+  for (auto c : config) std::cout << c->id << ",";
+  std::cout << std::endl;
+}
