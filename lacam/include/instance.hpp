@@ -31,4 +31,4 @@ struct Instance {
 // solution: a sequence of configurations
 using Solution = std::vector<Config>;
 void println(Solution& solution);
-void println(Config& config);
+void println(const Config& config);

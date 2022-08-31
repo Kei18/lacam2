@@ -74,8 +74,7 @@ Solution Planner::solve_high()
 
     // create successors at the high-level search
     auto C = get_new_config_high(S, M);
-    if (C.empty()) break;
-    println(C);
+    if (C.empty()) continue;
 
     // check explored list
     auto iter = CLOSED.find(C);
@@ -135,18 +134,23 @@ Config Planner::get_new_config_high(Node* S, Constraint* M)
     }
   }
 
+  // std::cout << "---" << std::endl;
+  // std::cout << "from:";
+  // println(S->C);
+
   // apply low-level planner
   auto C_new = Config(N, nullptr);
   for (auto k = 0; k <= zone; ++k) {
     auto sub_solution = solve_low(S, M, k);
     if (sub_solution.empty()) return Config();
-    println(sub_solution);
+    // println(sub_solution);
     for (auto i = 0; i < agent_indexes.size(); ++i) {
-      C_new[agent_indexes[i]] =
-          sub_solution[sub_solution.size() > 1 ? 1 : 0][i];
+      auto v = sub_solution[(sub_solution.size() > 1) ? 1 : 0][i];
+      C_new[agent_indexes[i]] = v;
     }
   }
-  std::cout << std::endl;
+  // println(C_new);
+  // std::cout << std::endl;
 
   // cleanup
   for (auto i = 0; i < N; ++i) occupied[S->C[i]->id] = NIL;
@@ -180,6 +184,8 @@ Solution Planner::solve_low(Node* S_high, Constraint* M_high, const int zone)
     if (i != NIL) {
       constraints_who.push_back(i);
       constraints_where.push_back(M_high->where[k]);
+      // std::cout << "who:" << i << ", where:" << constraints_where[k]->index
+      //           << std::endl;
     }
   }
 
@@ -278,8 +284,6 @@ bool Planner::get_new_config_low(Node* S, Constraint* M, Constraint* M_high)
     for (auto k = 0; k < constraints_who.size(); ++k) {
       const auto i = constraints_who[k];        // agent
       const auto l = constraints_where[k]->id;  // loc
-
-      std::cout << "who:" << i << ", where:" << l << std::endl;
 
       // check vertex collision
       if (occupied_next[l] != nullptr) return false;

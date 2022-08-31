@@ -102,8 +102,8 @@ void println(Solution& solution)
   }
 }
 
-void println(Config& config)
+void println(const Config& config)
 {
-  for (auto c : config) std::cout << c->id << ",";
+  for (auto c : config) std::cout << c->index << ",";
   std::cout << std::endl;
 }
