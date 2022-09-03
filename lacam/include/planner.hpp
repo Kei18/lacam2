@@ -43,6 +43,7 @@ struct Planner {
 
   // swap operations
   bool is_swap_required(int id_h, int id_l, Vertex* v_now_h, Vertex* v_now_l);
+  bool is_pullable(Vertex* v_now, Vertex* v_opposite);
 };
 
 // main function
