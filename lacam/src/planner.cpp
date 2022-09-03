@@ -96,6 +96,7 @@ Solution Planner::solve()
   info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\t",
        solution.empty() ? "failed" : "solution found", "\texpanded:", loop_cnt,
        "\texplored:", CLOSED.size());
+
   // memory management
   for (auto a : A) delete a;
   for (auto M : GC) delete M;
@@ -169,6 +170,31 @@ bool Planner::funcPIBT(Agent* ai, Agent* aj)
                      D.get(i, u) + tie_breakers[u->id];
             });
 
+  // for swap situation
+  Agent* swap_agent = nullptr;
+  {
+    auto al = occupied_now[C_next[i][0]->id];
+    if (al != nullptr && al != ai && al->v_next == nullptr &&
+        is_swap_required(ai->id, al->id, ai->v_now, al->v_now)) {
+      swap_agent = al;
+      // reverse
+      std::reverse(C_next[i].begin(), C_next[i].begin() + K + 1);
+    }
+  }
+  auto swap_operation = [&](const int k) {
+    if (k == 0 && swap_agent != nullptr && swap_agent->v_next == nullptr &&
+        occupied_next[ai->v_now->id] == nullptr) {
+      swap_agent->v_next = ai->v_now;
+      occupied_next[swap_agent->v_next->id] = swap_agent;
+    }
+  };
+  // for clear operation
+  if (aj != nullptr && C_next[i][0] != ai->v_now && C_next[i][0] != aj->v_now) {
+    if (is_swap_required(aj->id, ai->id, ai->v_now, C_next[i][0])) {
+      std::reverse(C_next[i].begin(), C_next[i].begin() + K + 1);
+    }
+  }
+
   for (auto k = 0; k < K + 1; ++k) {
     auto u = C_next[i][k];
 
@@ -187,12 +213,16 @@ bool Planner::funcPIBT(Agent* ai, Agent* aj)
     ai->v_next = u;
 
     // empty or stay
-    if (ak == nullptr || u == ai->v_now) return true;
+    if (ak == nullptr || u == ai->v_now) {
+      swap_operation(k);
+      return true;
+    }
 
     // priority inheritance
     if (ak->v_next == nullptr && !funcPIBT(ak, ai)) continue;
 
     // success to plan next one step
+    swap_operation(k);
     return true;
   }
 
@@ -200,6 +230,32 @@ bool Planner::funcPIBT(Agent* ai, Agent* aj)
   occupied_next[ai->v_now->id] = ai;
   ai->v_next = ai->v_now;
   return false;
+}
+
+bool Planner::is_swap_required(int id_h, int id_l, Vertex* v_now_h,
+                               Vertex* v_now_l)
+{
+  // simulating push
+  auto v_h = v_now_h;
+  auto v_l = v_now_l;
+  while (true) {
+    // corridor?
+    auto n = v_l->neighbor.size();
+    if (n > 2) {
+      if (D.get(id_l, v_h) >= D.get(id_l, v_l)) return false;
+      break;
+    } else if (n == 1) {
+      if (D.get(id_l, v_l) == 0) return false;  // swap is not necessary
+      break;
+    } else if (D.get(id_h, v_h) == 0) {  // n = 2, push done
+      if (D.get(id_l, v_h) < D.get(id_l, v_l)) return false;
+      break;
+    }
+    auto tmp = v_h;
+    v_h = v_l;
+    v_l = (v_l->neighbor[0] == tmp) ? v_l->neighbor[1] : v_l->neighbor[0];
+  }
+  return true;
 }
 
 Solution solve(const Instance& ins, const int verbose, const Deadline* deadline,

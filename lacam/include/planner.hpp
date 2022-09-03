@@ -40,6 +40,9 @@ struct Planner {
   Solution solve();
   bool get_new_config(Node* S, Constraint* M);
   bool funcPIBT(Agent* ai, Agent* aj = nullptr);
+
+  // swap operations
+  bool is_swap_required(int id_h, int id_l, Vertex* v_now_h, Vertex* v_now_l);
 };
 
 // main function
