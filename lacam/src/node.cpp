@@ -16,7 +16,9 @@ Node::Node(Config _C, DistTable& D, Node* _parent)
   if (parent == nullptr) {
     // initialize
     for (auto i = 0; i < N; ++i) {
-      priorities[i] = std::make_tuple(0, 0, (float)D.get(i, C[i]) / N);
+      priorities[i] = std::make_tuple(
+          (int)(D.get(i, C[i]) != 0 && C[i]->neighbor.size() == 1), 0, 0,
+          (float)D.get(i, C[i]) / N);
     }
 
   } else {
@@ -26,7 +28,9 @@ Node::Node(Config _C, DistTable& D, Node* _parent)
           (D.get(i, C[i]) != 0) ? (std::get<0>(parent->priorities[i]) + 1) : 0;
       auto q =
           (D.get(i, C[i]) == 0) ? std::get<1>(parent->priorities[i]) - 1 : 0;
-      priorities[i] = std::make_tuple(p, q, std::get<2>(parent->priorities[i]));
+      auto r = (int)(D.get(i, C[i]) != 0 && C[i]->neighbor.size() == 1);
+      priorities[i] =
+          std::make_tuple(r, p, q, std::get<2>(parent->priorities[i]));
     }
   }
 
