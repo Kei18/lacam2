@@ -30,5 +30,4 @@ struct Instance {
 
 // solution: a sequence of configurations
 using Solution = std::vector<Config>;
-void println(Solution& solution);
-void println(const Config& config);
+std::ostream& operator<<(std::ostream& os, const Solution& solution);

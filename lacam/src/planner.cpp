@@ -43,6 +43,8 @@ Solution Planner::solve()
 
     // do not pop here!
     S = OPEN.top();
+    info(2, verbose, "elapsed:", elapsed_ms(deadline), "ms",
+         "\titer:", loop_cnt, "\tdepth:", S->depth, "\tconfig:", S->C);
 
     // check goal condition
     if (is_same_config(S->C, ins->goals)) {
@@ -170,52 +172,29 @@ bool Planner::funcPIBT(Agent* ai, Agent* aj)
                      D.get(i, u) + tie_breakers[u->id];
             });
 
-  // for swap situation, pull agent
-  bool flg_pull = false;
-  bool flg_push = false;
+  // for swap situation
+  Agent* swap_agent = nullptr;
   {
     auto al = occupied_now[C_next[i][0]->id];
     if (al != nullptr && al != ai && al->v_next == nullptr &&
         is_swap_required(ai->id, al->id, ai->v_now, al->v_now) &&
         is_pullable(ai->v_now, al->v_now)) {
-      // reverse
+      swap_agent = al;
       std::reverse(C_next[i].begin(), C_next[i].begin() + K + 1);
-      flg_pull = true;
-      // std::cout << "pull:" << ai->id << std::endl;
     }
   }
-  // for swap situation, push agent
-  {
-    if (!flg_pull && K <= 2) {
-      for (auto u : ai->v_now->neighbor) {
-        auto ah = occupied_now[u->id];
-        if (ah != nullptr &&
-            is_swap_required(ah->id, ai->id, ah->v_now, ai->v_now) &&
-            is_pullable(ah->v_now, ai->v_now)) {
-          C_next[i][0] = u;
-          C_next[i][1] = ai->v_now;
-          if (K == 2) {
-            C_next[i][2] =
-                ai->v_now->neighbor[(u == ai->v_now->neighbor[0]) ? 1 : 0];
-          }
-          // std::cout << "push:" << ai->id << std::endl;
-          flg_push = true;
-          break;
-        }
-      }
+  auto swap_operation = [&](const int k) {
+    if (k == 0 && swap_agent != nullptr && swap_agent->v_next == nullptr &&
+        occupied_next[ai->v_now->id] == nullptr) {
+      swap_agent->v_next = ai->v_now;
+      occupied_next[swap_agent->v_next->id] = swap_agent;
     }
-  }
+  };
   // for clear operation
-  {
-    if (!flg_pull && !flg_push) {
-      for (auto u : ai->v_now->neighbor) {
-        auto ah = occupied_now[u->id];
-        if (ah != nullptr && C_next[i][0] != ai->v_now && C_next[i][0] != u &&
-            is_swap_required(ah->id, ai->id, ai->v_now, C_next[i][0])) {
-          std::reverse(C_next[i].begin(), C_next[i].begin() + K + 1);
-          // std::cout << "clear:" << ai->id << std::endl;
-        }
-      }
+  if (aj != nullptr && C_next[i][0] != ai->v_now && C_next[i][0] != aj->v_now) {
+    if (is_swap_required(aj->id, ai->id, ai->v_now, C_next[i][0]) &&
+        is_pullable(ai->v_now, C_next[i][0])) {
+      std::reverse(C_next[i].begin(), C_next[i].begin() + K + 1);
     }
   }
 
@@ -238,12 +217,16 @@ bool Planner::funcPIBT(Agent* ai, Agent* aj)
     ai->v_next = u;
 
     // empty or stay
-    if (ak == nullptr || u == ai->v_now) return true;
+    if (ak == nullptr || u == ai->v_now) {
+      swap_operation(k);
+      return true;
+    }
 
     // priority inheritance
     if (ak->v_next == nullptr && !funcPIBT(ak, ai)) continue;
 
     // success to plan next one step
+    swap_operation(k);
     return true;
   }
 
@@ -262,10 +245,21 @@ bool Planner::is_swap_required(int id_h, int id_l, Vertex* v_now_h,
   while (D.get(id_h, v_l) < D.get(id_h, v_h)) {
     // corridor?
     auto n = v_l->neighbor.size();
-    if (n == 1 || n > 2) break;
-    auto tmp = v_h;
-    v_h = v_l;
-    v_l = (v_l->neighbor[0] == tmp) ? v_l->neighbor[1] : v_l->neighbor[0];
+    // remove agents who need not to move
+    for (auto u : v_l->neighbor) {
+      auto a = occupied_now[u->id];
+      if (u->neighbor.size() == 1 && a != nullptr && ins->goals[a->id] == u)
+        --n;
+    }
+    if (n <= 1) {
+      break;
+    } else if (n >= 3) {
+      return false;
+    } else {
+      auto tmp = v_h;
+      v_h = v_l;
+      v_l = (v_l->neighbor[0] == tmp) ? v_l->neighbor[1] : v_l->neighbor[0];
+    }
   }
   return (D.get(id_l, v_h) < D.get(id_l, v_l)) &&
          (D.get(id_h, v_h) == 0 || D.get(id_h, v_l) < D.get(id_h, v_h));

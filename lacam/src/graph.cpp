@@ -109,3 +109,14 @@ uint ConfigHasher::operator()(const Config& C) const
   }
   return hash;
 }
+
+std::ostream& operator<<(std::ostream& os, const Config& config)
+{
+  os << "<";
+  for (auto i = 0; i < config.size(); ++i) {
+    if (i > 0) os << ",";
+    os << std::setw(5) << config[i]->index;
+  }
+  os << ">";
+  return os;
+}

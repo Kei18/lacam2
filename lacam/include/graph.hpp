@@ -36,3 +36,5 @@ bool is_same_config(
 struct ConfigHasher {
   uint operator()(const Config& C) const;
 };
+
+std::ostream& operator<<(std::ostream& os, const Config& config);

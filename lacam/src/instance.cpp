@@ -92,18 +92,16 @@ bool Instance::is_valid(const int verbose) const
   return true;
 }
 
-void println(Solution& solution)
+std::ostream& operator<<(std::ostream& os, const Solution& solution)
 {
   auto N = solution.front().size();
   for (auto i = 0; i < N; ++i) {
-    std::cout << i << ":";
-    for (auto&& C : solution) std::cout << C[i]->index << "->";
-    std::cout << std::endl;
+    os << std::setw(5) << i << ":";
+    for (auto k = 0; k < solution[i].size(); ++k) {
+      if (k > 0) os << "->";
+      os << std::setw(5) << solution[i][k]->index;
+    }
+    os << std::endl;
   }
-}
-
-void println(const Config& config)
-{
-  for (auto c : config) std::cout << c->index << ",";
-  std::cout << std::endl;
+  return os;
 }
