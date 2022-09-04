@@ -191,7 +191,7 @@ bool Planner::funcPIBT(Agent* ai, Agent* aj)
     }
   };
   // for clear operation
-  {
+  if (swap_agent == nullptr) {
     for (auto u : ai->v_now->neighbor) {
       auto ah = occupied_now[u->id];
       if (ah == nullptr || C_next[i][0] == ai->v_now ||
