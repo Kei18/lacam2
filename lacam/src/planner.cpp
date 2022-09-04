@@ -90,7 +90,7 @@ Solution Planner::solve()
     }
 
     // insert new search node
-    auto S_new = new Node(C, D, S);
+    auto S_new = new Node(C, D, S, MT);
     OPEN.push(S_new);
     CLOSED[S_new->C] = S_new;
   }
