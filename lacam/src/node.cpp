@@ -24,13 +24,13 @@ Node::Node(Config _C, DistTable& D, Node* _parent)
   } else {
     // dynamic priorities, akin to PIBT
     for (auto i = 0; i < N; ++i) {
-      auto p =
-          (D.get(i, C[i]) != 0) ? (std::get<0>(parent->priorities[i]) + 1) : 0;
-      auto q =
-          (D.get(i, C[i]) == 0) ? std::get<1>(parent->priorities[i]) - 1 : 0;
       auto r = (int)(D.get(i, C[i]) != 0 && C[i]->neighbor.size() == 1);
+      auto p =
+          (D.get(i, C[i]) != 0) ? (std::get<1>(parent->priorities[i]) + 1) : 0;
+      auto q =
+          (D.get(i, C[i]) == 0) ? std::get<2>(parent->priorities[i]) - 1 : 0;
       priorities[i] =
-          std::make_tuple(r, p, q, std::get<2>(parent->priorities[i]));
+          std::make_tuple(r, p, q, std::get<3>(parent->priorities[i]));
     }
   }
 
