@@ -191,10 +191,17 @@ bool Planner::funcPIBT(Agent* ai, Agent* aj)
     }
   };
   // for clear operation
-  if (aj != nullptr && C_next[i][0] != ai->v_now && C_next[i][0] != aj->v_now) {
-    if (is_swap_required(aj->id, ai->id, ai->v_now, C_next[i][0]) &&
-        is_pullable(ai->v_now, C_next[i][0])) {
-      std::reverse(C_next[i].begin(), C_next[i].begin() + K + 1);
+  {
+    for (auto u : ai->v_now->neighbor) {
+      auto ah = occupied_now[u->id];
+      if (ah == nullptr || C_next[i][0] == ai->v_now ||
+          C_next[i][0] == ah->v_now)
+        continue;
+      if (is_swap_required(ah->id, ai->id, ai->v_now, C_next[i][0]) &&
+          is_pullable(ai->v_now, C_next[i][0])) {
+        std::reverse(C_next[i].begin(), C_next[i].begin() + K + 1);
+        break;
+      }
     }
   }
 
@@ -243,24 +250,28 @@ bool Planner::is_swap_required(int id_h, int id_l, Vertex* v_now_h,
   auto v_h = v_now_h;
   auto v_l = v_now_l;
   while (D.get(id_h, v_l) < D.get(id_h, v_h)) {
-    // corridor?
     auto n = v_l->neighbor.size();
+    Vertex* tmp;
     // remove agents who need not to move
     for (auto u : v_l->neighbor) {
       auto a = occupied_now[u->id];
-      if (u->neighbor.size() == 1 && a != nullptr && ins->goals[a->id] == u)
+      if (u == v_h ||
+          (u->neighbor.size() == 1 && a != nullptr && ins->goals[a->id] == u)) {
         --n;
+      } else {
+        tmp = u;
+      }
     }
-    if (n <= 1) {
+    if (n <= 0) {
       break;
-    } else if (n >= 3) {
+    } else if (n >= 2) {
       return false;
     } else {
-      auto tmp = v_h;
       v_h = v_l;
-      v_l = (v_l->neighbor[0] == tmp) ? v_l->neighbor[1] : v_l->neighbor[0];
+      v_l = tmp;
     }
   }
+
   return (D.get(id_l, v_h) < D.get(id_l, v_l)) &&
          (D.get(id_h, v_h) == 0 || D.get(id_h, v_l) < D.get(id_h, v_h));
 }
@@ -269,12 +280,25 @@ bool Planner::is_pullable(Vertex* v_now, Vertex* v_opposite)
 {
   auto v_pre = v_opposite;
   auto v_next = v_now;
-  while (v_next->neighbor.size() == 2) {
-    auto tmp = v_next;
-    v_next = v_next->neighbor[(v_next->neighbor[0] == v_pre) ? 1 : 0];
-    v_pre = tmp;
+
+  while (true) {
+    auto n = v_next->neighbor.size();
+    Vertex* tmp = nullptr;
+    for (auto u : v_next->neighbor) {
+      auto a = occupied_now[u->id];
+      if (u == v_pre ||
+          (u->neighbor.size() == 1 && a != nullptr && ins->goals[a->id] == u)) {
+        --n;
+      } else {
+        tmp = u;
+      }
+    }
+    if (n >= 2) return true;
+    if (n == 0) return false;
+    v_pre = v_next;
+    v_next = tmp;
   }
-  return v_next->neighbor.size() != 1;
+  return false;
 }
 
 Solution solve(const Instance& ins, const int verbose, const Deadline* deadline,

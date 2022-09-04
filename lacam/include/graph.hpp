@@ -37,4 +37,5 @@ struct ConfigHasher {
   uint operator()(const Config& C) const;
 };
 
+std::ostream& operator<<(std::ostream& os, const Vertex* v);
 std::ostream& operator<<(std::ostream& os, const Config& config);
