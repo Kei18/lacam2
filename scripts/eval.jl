@@ -37,6 +37,7 @@ function main(config_file)
     time_limit_sec = get(config, "time_limit_sec", 10)
     scen = get(config, "scen", "test")
     num_min_agents = get(config, "num_min_agents", 10)
+    num_max_agents = get(config, "num_max_agents", 1000)
     num_interval_agents = get(config, "num_interval_agents", 10)
     maps = get(config, "maps", Vector{String}())
     all_scen = glob("assets/scen/scen-$(scen)/*.scen")
@@ -52,13 +53,15 @@ function main(config_file)
     l = 0
     for scen_file in all_scen
         lines = readlines(scen_file)
-        N_max = length(lines) - 1
+        N_max = min(length(lines) - 1, num_max_agents)
         map_name_raw = last(split(match(r"\d+\t(.+).map\t(.+)", lines[2])[1], "/"))
         !(map_name_raw in maps) && continue
         l += 1
         map_file = "assets/map/$(map_name_raw).map"
         cnt_fin = Threads.Atomic{Int}(0)
-        loops = collect(enumerate(Iterators.product(num_min_agents:num_interval_agents:N_max, 1:seeds)))
+        agents = collect(num_min_agents:num_interval_agents:N_max)
+        (isempty(agents) || last(agents) != N_max) && push!(agents, N_max)
+        loops = collect(enumerate(Iterators.product(agents, 1:seeds)))
         num_total_tasks = length(loops)
         result = Vector{Any}(undef, num_total_tasks)
         scen_short = first(split(last(split(scen_file, "/")), "."))

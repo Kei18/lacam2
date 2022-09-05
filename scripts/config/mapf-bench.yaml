@@ -1,5 +1,6 @@
 # for MAPF benchmark
 num_min_agents: 50
+num_max_agents: 1000
 num_interval_agents: 50
 time_limit_sec: 30
 seeds: 5  # the number of iterations
