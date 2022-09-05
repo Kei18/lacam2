@@ -8,6 +8,7 @@ scen: random
 maps:
   - Berlin_1_256
   - Boston_0_256
+  - brc202d
   - Paris_1_256
   - den312d
   - den520d
