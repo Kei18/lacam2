@@ -30,9 +30,9 @@ Solution Planner::solve()
   std::vector<Constraint*> GC;  // garbage collection of constraints
 
   // insert initial node
-  auto S = new Node(ins->starts, D);
-  OPEN.push(S);
-  CLOSED[S->C] = S;
+  auto S_init = new Node(ins->starts, D);
+  OPEN.push(S_init);
+  CLOSED[S_init->C] = S_init;
 
   // best first search
   int loop_cnt = 0;
@@ -42,7 +42,7 @@ Solution Planner::solve()
     loop_cnt += 1;
 
     // do not pop here!
-    S = OPEN.top();
+    auto S = OPEN.top();
     info(2, verbose, "elapsed:", elapsed_ms(deadline), "ms",
          "\titer:", loop_cnt, "\tdepth:", S->depth, "\tconfig:", S->C);
 
@@ -85,12 +85,16 @@ Solution Planner::solve()
     // check explored list
     auto iter = CLOSED.find(C);
     if (iter != CLOSED.end()) {
-      OPEN.push(iter->second);
+      if (get_random_float(MT) < MUTATION_RATE) {
+        OPEN.push(S_init);
+      } else {
+        OPEN.push(iter->second);
+      }
       continue;
     }
 
     // insert new search node
-    auto S_new = new Node(C, D, S, MT);
+    auto S_new = new Node(C, D, S);
     OPEN.push(S_new);
     CLOSED[S_new->C] = S_new;
   }

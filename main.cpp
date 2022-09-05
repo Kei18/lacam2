@@ -60,7 +60,6 @@ int main(int argc, char* argv[])
   // check feasibility
   if (!is_feasible_solution(ins, solution, verbose)) {
     info(0, verbose, "invalid solution");
-    return 1;
   }
 
   // post processing

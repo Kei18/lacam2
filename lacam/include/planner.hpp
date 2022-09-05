@@ -19,6 +19,9 @@ using Agents = std::vector<Agent*>;
 // next location candidates, for saving memory allocation
 using Candidates = std::vector<std::array<Vertex*, 5> >;
 
+// random restart
+static constexpr float MUTATION_RATE = 0.001;
+
 struct Planner {
   const Instance* ins;
   const Deadline* deadline;
