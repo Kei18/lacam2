@@ -11,6 +11,8 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
       N(ins->N),
       V_size(ins->G.size()),
       D(DistTable(ins)),
+      OPEN(std::stack<Node*>()),
+      CLOSED(std::unordered_map<Config, Node*, ConfigHasher>()),
       S_goal(nullptr),
       loop_cnt(0),
       node_cnt(0),
@@ -26,16 +28,14 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
 
 Planner::~Planner()
 {
+  // memory management
   for (auto a : A) delete a;
+  for (auto p : CLOSED) delete p.second;
 }
 
 Solution Planner::solve()
 {
   solver_info(1, "start search");
-
-  // setup search queues
-  std::stack<Node*> OPEN;
-  std::unordered_map<Config, Node*, ConfigHasher> CLOSED;
 
   // insert initial node
   auto S_init = new Node(ins->starts, D);
@@ -59,6 +59,12 @@ Solution Planner::solve()
       continue;
     }
 
+    // check upper bound
+    if (S_goal != nullptr && S->depth >= S_goal->depth) {
+      OPEN.pop();
+      continue;
+    }
+
     // check goal condition
     if (is_same_config(S->C, ins->goals)) {
       if (S_goal == nullptr) {
@@ -66,10 +72,10 @@ Solution Planner::solve()
         solver_info(1, "found solution, cost: ", S->depth);
       }
       // random insert
-      auto S_rand = std::next(std::begin(CLOSED),
-                              get_random_int(MT, 0, CLOSED.size() - 1))
-                        ->second;
-      OPEN.push(S_rand);
+      // auto S_rand = std::next(std::begin(CLOSED),
+      //                         get_random_int(MT, 0, CLOSED.size() - 1))
+      //                   ->second;
+      // OPEN.push(S_rand);
       continue;
     }
 
@@ -81,24 +87,24 @@ Solution Planner::solve()
     // create successors at the high-level search
     const auto res = get_new_config(S, M);
     delete M;  // free
-    if (res) {
-      // create new configuration
-      for (auto a : A) C_new[a->id] = a->v_next;
+    if (!res) continue;
 
-      // check explored list
-      const auto iter = CLOSED.find(C_new);
-      if (iter != CLOSED.end()) {
-        // case found
-        update_cost(S, iter->second);
-        // re-insert or random-restart
-        OPEN.push(get_random_float(MT) >= RESTART_RATE ? iter->second : S_init);
-      } else {
-        // insert new search node
-        const auto S_new = new Node(C_new, D, S);
-        OPEN.push(S_new);
-        ++node_cnt;
-        CLOSED[S_new->C] = S_new;
-      }
+    // create new configuration
+    for (auto a : A) C_new[a->id] = a->v_next;
+
+    // check explored list
+    const auto iter = CLOSED.find(C_new);
+    if (iter != CLOSED.end()) {
+      // case found
+      update_cost(S, iter->second);
+      // re-insert or random-restart
+      OPEN.push(get_random_float(MT) >= RESTART_RATE ? iter->second : S_init);
+    } else {
+      // insert new search node
+      const auto S_new = new Node(C_new, D, S);
+      OPEN.push(S_new);
+      ++node_cnt;
+      CLOSED[S_new->C] = S_new;
     }
   }
 
@@ -112,16 +118,15 @@ Solution Planner::solve()
     std::reverse(solution.begin(), solution.end());
   }
 
-  if (S_goal != nullptr) {
+  if (S_goal != nullptr && OPEN.empty()) {
+    solver_info(1, "optimally solved");
+  } else if (S_goal != nullptr) {
     solver_info(1, "solved");
   } else if (OPEN.empty()) {
     solver_info(1, "no solution");
   } else {
     solver_info(1, "timeout");
   }
-
-  // memory management
-  for (auto p : CLOSED) delete p.second;
 
   return solution;
 }
@@ -155,6 +160,7 @@ void Planner::update_cost(Node* S_from, Node* S_to)
     if (S == S_goal)
       solver_info(1, "cost update: ", S->depth, " -> ", S->parent->depth + 1);
     S->depth = S->parent->depth + 1;
+    if (S_goal != nullptr && S->depth < S_goal->depth) OPEN.push(S);
     for (auto iter : S->children) Q.push(iter.second);
   }
 }
