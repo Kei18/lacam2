@@ -15,13 +15,14 @@ struct Instance {
 
   // for testing
   Instance(const std::string& map_filename,
-           const std::vector<int>& start_indexes,
-           const std::vector<int>& goal_indexes);
+           const std::vector<uint>& start_indexes,
+           const std::vector<uint>& goal_indexes);
   // for MAPF benchmark
   Instance(const std::string& scen_filename, const std::string& map_filename,
-           const int _N = 1);
+           const uint _N = 1);
   // random instance generation
-  Instance(const std::string& map_filename, std::mt19937* MT, const int _N = 1);
+  Instance(const std::string& map_filename, std::mt19937* MT,
+           const uint _N = 1);
   ~Instance() {}
 
   // simple feasibility check of instance
@@ -30,5 +31,4 @@ struct Instance {
 
 // solution: a sequence of configurations
 using Solution = std::vector<Config>;
-void println(Solution& solution);
-void println(const Config& config);
+std::ostream& operator<<(std::ostream& os, const Solution& solution);

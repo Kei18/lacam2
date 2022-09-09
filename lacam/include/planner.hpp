@@ -9,10 +9,10 @@
 
 // PIBT agent
 struct Agent {
-  const int id;
+  const uint id;
   Vertex* v_now;   // current location
   Vertex* v_next;  // next location
-  Agent(int _id) : id(_id), v_now(nullptr), v_next(nullptr) {}
+  Agent(uint _id) : id(_id), v_now(nullptr), v_next(nullptr) {}
 };
 using Agents = std::vector<Agent*>;
 
@@ -24,24 +24,30 @@ struct Planner {
   const Deadline* deadline;
   std::mt19937* MT;
   const int verbose;
+  const float RESTART_RATE;  // random restart
 
   // solver utils
-  const int N;  // number of agents
-  const int V_size;
+  const uint N;  // number of agents
+  const uint V_size;
   DistTable D;
-  Candidates C_next;
+  Candidates C_next;                // used in PIBT
   std::vector<float> tie_breakers;  // random values, used in PIBT
   Agents A;
   Agents occupied_now;   // for quick collision checking
   Agents occupied_next;  // for quick collision checking
 
   Planner(const Instance* _ins, const Deadline* _deadline, std::mt19937* _MT,
-          int _verbose = 0);
+          const int _verbose = 0, const float _restart_rate = 0.001);
   Solution solve();
   bool get_new_config(Node* S, Constraint* M);
   bool funcPIBT(Agent* ai, Agent* aj = nullptr);
+
+  // swap operations
+  bool is_swap_required(uint id_h, uint id_l, Vertex* v_now_h, Vertex* v_now_l);
+  bool is_pullable(Vertex* v_now, Vertex* v_opposite);
 };
 
 // main function
 Solution solve(const Instance& ins, const int verbose = 0,
-               const Deadline* deadline = nullptr, std::mt19937* MT = nullptr);
+               const Deadline* deadline = nullptr, std::mt19937* MT = nullptr,
+               const float restart_rate = 0.001);

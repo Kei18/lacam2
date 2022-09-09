@@ -9,7 +9,7 @@
 bool is_feasible_solution(const Instance& ins, const Solution& solution,
                           const int verbose = 0);
 int get_makespan(const Solution& solution);
-int get_path_cost(const Solution& solution, int i);  // single-agent path cost
+int get_path_cost(const Solution& solution, uint i);  // single-agent path cost
 int get_sum_of_costs(const Solution& solution);
 int get_makespan_lower_bound(const Instance& ins, DistTable& D);
 int get_sum_of_costs_lower_bound(const Instance& ins, DistTable& D);
