@@ -18,14 +18,18 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
       occupied_now(Agents(V_size, nullptr)),
       occupied_next(Agents(V_size, nullptr))
 {
+  // setup agents
+  for (uint i = 0; i < N; ++i) A[i] = new Agent(i);
+}
+
+Planner::~Planner()
+{
+  for (auto a : A) delete a;
 }
 
 Solution Planner::solve()
 {
   info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\tstart search");
-
-  // setup agents
-  for (uint i = 0; i < N; ++i) A[i] = new Agent(i);
 
   // setup search queues
   std::stack<Node*> OPEN;
@@ -47,23 +51,24 @@ Solution Planner::solve()
     // do not pop here!
     auto S = OPEN.top();
 
+    // low-level search end
+    if (S->search_tree.empty()) {
+      OPEN.pop();
+      continue;
+    }
+
     // check goal condition
     if (is_same_config(S->C, ins->goals)) {
       if (S_goal == nullptr) {
         S_goal = S;
         info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\t",
-             "found solution, depth: ", S->depth);
+             "found solution, cost: ", S->depth);
       }
       // random insert
-      OPEN.push(std::next(std::begin(CLOSED),
-                          get_random_int(MT, 0, CLOSED.size() - 1))
-                    ->second);
-      continue;
-    }
-
-    // low-level search end
-    if (S->search_tree.empty()) {
-      OPEN.pop();
+      auto S_rand = std::next(std::begin(CLOSED),
+                              get_random_int(MT, 0, CLOSED.size() - 1))
+                        ->second;
+      OPEN.push(S_rand);
       continue;
     }
 
@@ -75,27 +80,24 @@ Solution Planner::solve()
     // create successors at the high-level search
     const auto res = get_new_config(S, M);
     delete M;  // free
-    if (!res) continue;
+    if (res) {
+      // create new configuration
+      for (auto a : A) C_new[a->id] = a->v_next;
 
-    // create new configuration
-    for (auto a : A) C_new[a->id] = a->v_next;
-
-    // check explored list
-    const auto iter = CLOSED.find(C_new);
-    if (iter != CLOSED.end()) {
-      update_cost(S, iter->second);
-      if (get_random_float(MT) >= RESTART_RATE) {
-        OPEN.push(iter->second);  // re-insert
+      // check explored list
+      const auto iter = CLOSED.find(C_new);
+      if (iter != CLOSED.end()) {
+        // case found
+        update_cost(S, iter->second);
+        // re-insert or random-restart
+        OPEN.push(get_random_float(MT) >= RESTART_RATE ? iter->second : S_init);
       } else {
-        OPEN.push(S_init);  // random-restart
+        // insert new search node
+        const auto S_new = new Node(C_new, D, S);
+        OPEN.push(S_new);
+        CLOSED[S_new->C] = S_new;
       }
-      continue;
     }
-
-    // insert new search node
-    const auto S_new = new Node(C_new, D, S);
-    OPEN.push(S_new);
-    CLOSED[S_new->C] = S_new;
   }
 
   // backtrack
@@ -109,11 +111,11 @@ Solution Planner::solve()
   }
 
   info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\t",
-       solution.empty() ? "failed" : "solution found", "\titer:", loop_cnt,
-       "\texplored:", CLOSED.size());
+       S_goal == nullptr ? (OPEN.empty() ? "no solution" : "timeout")
+                         : "solution found",
+       "\titer:", loop_cnt, "\texplored:", CLOSED.size());
 
   // memory management
-  for (auto a : A) delete a;
   for (auto p : CLOSED) delete p.second;
 
   return solution;

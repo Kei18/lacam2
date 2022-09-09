@@ -39,6 +39,7 @@ struct Planner {
 
   Planner(const Instance* _ins, const Deadline* _deadline, std::mt19937* _MT,
           const int _verbose = 0, const float _restart_rate = 0.001);
+  ~Planner();
   Solution solve();
   void expand_lowlevel_tree(Node* S, Constraint* M);
   void update_cost(Node* S_from, Node* S_to);
