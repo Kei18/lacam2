@@ -19,8 +19,8 @@ bool is_feasible_solution(const Instance& ins, const Solution& solution,
     return false;
   }
 
-  for (auto t = 1; t < solution.size(); ++t) {
-    for (auto i = 0; i < ins.N; ++i) {
+  for (size_t t = 1; t < solution.size(); ++t) {
+    for (size_t i = 0; i < ins.N; ++i) {
       auto v_i_from = solution[t - 1][i];
       auto v_i_to = solution[t][i];
       // check connectivity
@@ -32,7 +32,7 @@ bool is_feasible_solution(const Instance& ins, const Solution& solution,
       }
 
       // check conflicts
-      for (auto j = i + 1; j < ins.N; ++j) {
+      for (size_t j = i + 1; j < ins.N; ++j) {
         auto v_j_from = solution[t - 1][j];
         auto v_j_to = solution[t][j];
         // vertex conflicts
@@ -58,7 +58,7 @@ int get_makespan(const Solution& solution)
   return solution.size() - 1;
 }
 
-int get_path_cost(const Solution& solution, int i)
+int get_path_cost(const Solution& solution, uint i)
 {
   const auto makespan = solution.size();
   const auto g = solution.back()[i];
@@ -72,14 +72,14 @@ int get_sum_of_costs(const Solution& solution)
   if (solution.empty()) return 0;
   int c = 0;
   const auto N = solution.front().size();
-  for (auto i = 0; i < N; ++i) c += get_path_cost(solution, i);
+  for (size_t i = 0; i < N; ++i) c += get_path_cost(solution, i);
   return c;
 }
 
 int get_makespan_lower_bound(const Instance& ins, DistTable& dist_table)
 {
-  int c = 0;
-  for (auto i = 0; i < ins.N; ++i) {
+  uint c = 0;
+  for (size_t i = 0; i < ins.N; ++i) {
     c = std::max(c, dist_table.get(i, ins.starts[i]));
   }
   return c;
@@ -88,7 +88,7 @@ int get_makespan_lower_bound(const Instance& ins, DistTable& dist_table)
 int get_sum_of_costs_lower_bound(const Instance& ins, DistTable& dist_table)
 {
   int c = 0;
-  for (auto i = 0; i < ins.N; ++i) {
+  for (size_t i = 0; i < ins.N; ++i) {
     c += dist_table.get(i, ins.starts[i]);
   }
   return c;
@@ -141,17 +141,17 @@ void make_log(const Instance& ins, const Solution& solution,
   log << "seed=" << seed << "\n";
   if (log_short) return;
   log << "starts=";
-  for (auto i = 0; i < ins.N; ++i) {
+  for (size_t i = 0; i < ins.N; ++i) {
     auto k = ins.starts[i]->index;
     log << "(" << get_x(k) << "," << get_y(k) << "),";
   }
   log << "\ngoals=";
-  for (auto i = 0; i < ins.N; ++i) {
+  for (size_t i = 0; i < ins.N; ++i) {
     auto k = ins.goals[i]->index;
     log << "(" << get_x(k) << "," << get_y(k) << "),";
   }
   log << "\nsolution=\n";
-  for (auto t = 0; t < solution.size(); ++t) {
+  for (size_t t = 0; t < solution.size(); ++t) {
     log << t << ":";
     auto C = solution[t];
     for (auto v : C) {
