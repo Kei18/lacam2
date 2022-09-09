@@ -21,9 +21,6 @@
 
 using Time = std::chrono::steady_clock;
 
-template <typename Head, typename... Tail>
-void info(const int level, const int verbose, Head&& head, Tail&&... tail);
-
 void info(const int level, const int verbose);
 
 template <typename Head, typename... Tail>

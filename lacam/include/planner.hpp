@@ -30,7 +30,9 @@ struct Planner {
   const uint N;  // number of agents
   const uint V_size;
   DistTable D;
-  Node* S_goal;                     // goal node
+  Node* S_goal;  // goal node
+  int loop_cnt;
+  int node_cnt;
   Candidates C_next;                // used in PIBT
   std::vector<float> tie_breakers;  // random values, used in PIBT
   Agents A;
@@ -45,10 +47,18 @@ struct Planner {
   void update_cost(Node* S_from, Node* S_to);
   bool get_new_config(Node* S, Constraint* M);
   bool funcPIBT(Agent* ai, Agent* aj = nullptr);
-
-  // swap operations
   bool is_swap_required(uint id_h, uint id_l, Vertex* v_now_h, Vertex* v_now_l);
   bool is_pullable(Vertex* v_now, Vertex* v_opposite);
+
+  template <typename... Body>
+  void solver_info(const int level, Body&&... body)
+  {
+    if (verbose < level) return;
+    std::cout << "elapsed:" << std::setw(6) << elapsed_ms(deadline) << "ms"
+              << "  loop_cnt:" << std::setw(8) << loop_cnt
+              << "  node_cnt:" << std::setw(8) << node_cnt << "\t";
+    info(level, verbose, (body)...);
+  }
 };
 
 // main function

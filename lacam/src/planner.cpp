@@ -12,6 +12,8 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
       V_size(ins->G.size()),
       D(DistTable(ins)),
       S_goal(nullptr),
+      loop_cnt(0),
+      node_cnt(0),
       C_next(Candidates(N, std::array<Vertex*, 5>())),
       tie_breakers(std::vector<float>(V_size, 0)),
       A(Agents(N, nullptr)),
@@ -29,7 +31,7 @@ Planner::~Planner()
 
 Solution Planner::solve()
 {
-  info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\tstart search");
+  solver_info(1, "start search");
 
   // setup search queues
   std::stack<Node*> OPEN;
@@ -38,10 +40,10 @@ Solution Planner::solve()
   // insert initial node
   auto S_init = new Node(ins->starts, D);
   OPEN.push(S_init);
+  ++node_cnt;
   CLOSED[S_init->C] = S_init;
 
   // BFS
-  int loop_cnt = 0;
   std::vector<Config> solution;
   auto C_new = Config(N, nullptr);  // new configuration
 
@@ -61,8 +63,7 @@ Solution Planner::solve()
     if (is_same_config(S->C, ins->goals)) {
       if (S_goal == nullptr) {
         S_goal = S;
-        info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\t",
-             "found solution, cost: ", S->depth);
+        solver_info(1, "found solution, cost: ", S->depth);
       }
       // random insert
       auto S_rand = std::next(std::begin(CLOSED),
@@ -95,6 +96,7 @@ Solution Planner::solve()
         // insert new search node
         const auto S_new = new Node(C_new, D, S);
         OPEN.push(S_new);
+        ++node_cnt;
         CLOSED[S_new->C] = S_new;
       }
     }
@@ -110,10 +112,13 @@ Solution Planner::solve()
     std::reverse(solution.begin(), solution.end());
   }
 
-  info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\t",
-       S_goal == nullptr ? (OPEN.empty() ? "no solution" : "timeout")
-                         : "solution found",
-       "\titer:", loop_cnt, "\texplored:", CLOSED.size());
+  if (S_goal != nullptr) {
+    solver_info(1, "solved");
+  } else if (OPEN.empty()) {
+    solver_info(1, "no solution");
+  } else {
+    solver_info(1, "timeout");
+  }
 
   // memory management
   for (auto p : CLOSED) delete p.second;
@@ -147,10 +152,8 @@ void Planner::update_cost(Node* S_from, Node* S_to)
   while (!Q.empty()) {
     auto S = Q.front();
     Q.pop();
-    if (S == S_goal) {
-      info(2, verbose, "elapsed:", elapsed_ms(deadline), "ms\t",
-           "cost update: ", S->depth, " -> ", S->parent->depth + 1);
-    }
+    if (S == S_goal)
+      solver_info(1, "cost update: ", S->depth, " -> ", S->parent->depth + 1);
     S->depth = S->parent->depth + 1;
     for (auto iter : S->children) Q.push(iter.second);
   }
@@ -350,7 +353,6 @@ bool Planner::is_pullable(Vertex* v_now, Vertex* v_opposite)
 Solution solve(const Instance& ins, const int verbose, const Deadline* deadline,
                std::mt19937* MT, const float restart_rate)
 {
-  info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\tpre-processing");
   auto planner = Planner(&ins, deadline, MT, verbose, restart_rate);
   return planner.solve();
 }
