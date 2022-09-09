@@ -4,10 +4,10 @@
 
 // low-level search node
 struct Constraint {
-  std::vector<int> who;
+  std::vector<uint> who;
   Vertices where;
-  const int depth;
+  const uint depth;
   Constraint();
-  Constraint(Constraint* parent, int i, Vertex* v);  // who and where
+  Constraint(Constraint* parent, uint i, Vertex* v);  // who and where
   ~Constraint();
 };
