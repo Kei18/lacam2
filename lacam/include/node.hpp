@@ -6,9 +6,11 @@
 
 // high-level search node
 struct Node {
+  const uint id;
   const Config C;
   Node* parent;
-  const uint depth;
+  std::unordered_map<uint, Node*> children;
+  uint depth;
 
   // for low-level search
   std::vector<std::tuple<int, int, float>> priorities;

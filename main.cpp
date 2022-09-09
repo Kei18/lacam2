@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
       .default_value(std::string("0"));
   program.add_argument("-t", "--time_limit_sec")
       .help("time limit sec")
-      .default_value(std::string("10"));
+      .default_value(std::string("3"));
   program.add_argument("-o", "--output")
       .help("output file")
       .default_value(std::string("./build/result.txt"));

@@ -11,6 +11,7 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
       N(ins->N),
       V_size(ins->G.size()),
       D(DistTable(ins)),
+      S_goal(nullptr),
       C_next(Candidates(N, std::array<Vertex*, 5>())),
       tie_breakers(std::vector<float>(V_size, 0)),
       A(Agents(N, nullptr)),
@@ -35,29 +36,29 @@ Solution Planner::solve()
   OPEN.push(S_init);
   CLOSED[S_init->C] = S_init;
 
-  // best first search
-  uint loop_cnt = 0;
+  // BFS
+  int loop_cnt = 0;
   std::vector<Config> solution;
-  auto C_new = Config(N, nullptr);       // new configuration
-  auto C_lowlevel = Config(5, nullptr);  // to generate low-level nodes
+  auto C_new = Config(N, nullptr);  // new configuration
 
   while (!OPEN.empty() && !is_expired(deadline)) {
     loop_cnt += 1;
 
     // do not pop here!
     auto S = OPEN.top();
-    info(3, verbose, "elapsed:", elapsed_ms(deadline), "ms",
-         "\titer:", loop_cnt, "\tdepth:", S->depth, "\tconfig:", S->C);
 
     // check goal condition
     if (is_same_config(S->C, ins->goals)) {
-      // backtrack
-      while (S != nullptr) {
-        solution.push_back(S->C);
-        S = S->parent;
+      if (S_goal == nullptr) {
+        S_goal = S;
+        info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\t",
+             "found solution, depth: ", S->depth);
       }
-      std::reverse(solution.begin(), solution.end());
-      break;
+      // random insert
+      OPEN.push(std::next(std::begin(CLOSED),
+                          get_random_int(MT, 0, CLOSED.size() - 1))
+                    ->second);
+      continue;
     }
 
     // low-level search end
@@ -69,18 +70,7 @@ Solution Planner::solve()
     // create successors at the low-level search
     auto M = S->search_tree.front();
     S->search_tree.pop();
-    if (M->depth < N) {
-      const auto i = S->order[M->depth];
-      const auto K = S->C[i]->neighbor.size();
-      for (size_t k = 0; k < K; ++k) C_lowlevel[k] = S->C[i]->neighbor[k];
-      C_lowlevel[K] = S->C[i];
-      // randomize
-      if (MT != nullptr)
-        std::shuffle(C_lowlevel.begin(), C_lowlevel.begin() + K + 1, *MT);
-      // insert
-      for (size_t k = 0; k <= K; ++k)
-        S->search_tree.push(new Constraint(M, i, C_lowlevel[k]));
-    }
+    expand_lowlevel_tree(S, M);
 
     // create successors at the high-level search
     const auto res = get_new_config(S, M);
@@ -93,14 +83,11 @@ Solution Planner::solve()
     // check explored list
     const auto iter = CLOSED.find(C_new);
     if (iter != CLOSED.end()) {
-      if (get_random_float(MT) < RESTART_RATE) {
-        info(2, verbose, "elapsed:", elapsed_ms(deadline), "ms",
-             "\titer:", loop_cnt, "\tdepth:", S->depth, "\tre-start");
-        OPEN.push(S_init);
+      update_cost(S, iter->second);
+      if (get_random_float(MT) >= RESTART_RATE) {
+        OPEN.push(iter->second);  // re-insert
       } else {
-        info(2, verbose, "elapsed:", elapsed_ms(deadline), "ms",
-             "\titer:", loop_cnt, "\tdepth:", S->depth, "\tre-insert");
-        OPEN.push(iter->second);
+        OPEN.push(S_init);  // random-restart
       }
       continue;
     }
@@ -109,6 +96,16 @@ Solution Planner::solve()
     const auto S_new = new Node(C_new, D, S);
     OPEN.push(S_new);
     CLOSED[S_new->C] = S_new;
+  }
+
+  // backtrack
+  if (S_goal != nullptr) {
+    auto S = S_goal;
+    while (S != nullptr) {
+      solution.push_back(S->C);
+      S = S->parent;
+    }
+    std::reverse(solution.begin(), solution.end());
   }
 
   info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\t",
@@ -120,6 +117,41 @@ Solution Planner::solve()
   for (auto p : CLOSED) delete p.second;
 
   return solution;
+}
+
+void Planner::expand_lowlevel_tree(Node* S, Constraint* M)
+{
+  if (M->depth >= N) return;
+  const auto i = S->order[M->depth];
+  auto C = S->C[i]->neighbor;
+  C.push_back(S->C[i]);
+  // randomize
+  if (MT != nullptr) std::shuffle(C.begin(), C.end(), *MT);
+  // insert
+  for (auto v : C) S->search_tree.push(new Constraint(M, i, v));
+}
+
+void Planner::update_cost(Node* S_from, Node* S_to)
+{
+  if (S_to->depth <= S_from->depth + 1) return;
+
+  // update tree structure
+  S_to->parent->children.erase(S_to->id);
+  S_to->parent = S_from;
+  S_from->children[S_to->id] = S_to;
+  // update children costs using BFS
+  std::queue<Node*> Q;
+  Q.push(S_to);
+  while (!Q.empty()) {
+    auto S = Q.front();
+    Q.pop();
+    if (S == S_goal) {
+      info(2, verbose, "elapsed:", elapsed_ms(deadline), "ms\t",
+           "cost update: ", S->depth, " -> ", S->parent->depth + 1);
+    }
+    S->depth = S->parent->depth + 1;
+    for (auto iter : S->children) Q.push(iter.second);
+  }
 }
 
 bool Planner::get_new_config(Node* S, Constraint* M)

@@ -1,9 +1,13 @@
 #include "../include/node.hpp"
 
+static uint NODE_ID = 0;
+
 // for high-level
 Node::Node(const Config& _C, DistTable& D, Node* _parent)
-    : C(_C),
+    : id(++NODE_ID),
+      C(_C),
       parent(_parent),
+      children(std::unordered_map<uint, Node*>()),
       depth(_parent == nullptr ? 0 : _parent->depth + 1),
       priorities(C.size()),
       order(C.size(), 0),
@@ -11,6 +15,9 @@ Node::Node(const Config& _C, DistTable& D, Node* _parent)
 {
   search_tree.push(new Constraint());
   const auto N = C.size();
+
+  // update children of parent
+  if (parent != nullptr) parent->children[id] = this;
 
   // set priorities
   if (parent == nullptr) {

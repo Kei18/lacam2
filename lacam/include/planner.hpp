@@ -30,6 +30,7 @@ struct Planner {
   const uint N;  // number of agents
   const uint V_size;
   DistTable D;
+  Node* S_goal;                     // goal node
   Candidates C_next;                // used in PIBT
   std::vector<float> tie_breakers;  // random values, used in PIBT
   Agents A;
@@ -39,6 +40,8 @@ struct Planner {
   Planner(const Instance* _ins, const Deadline* _deadline, std::mt19937* _MT,
           const int _verbose = 0, const float _restart_rate = 0.001);
   Solution solve();
+  void expand_lowlevel_tree(Node* S, Constraint* M);
+  void update_cost(Node* S_from, Node* S_to);
   bool get_new_config(Node* S, Constraint* M);
   bool funcPIBT(Agent* ai, Agent* aj = nullptr);
 
