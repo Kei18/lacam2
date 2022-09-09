@@ -25,6 +25,9 @@ int main(int argc, char* argv[])
   program.add_argument("-l", "--log_short")
       .default_value(false)
       .implicit_value(true);
+  program.add_argument("-r", "--restart_rate")
+      .help("restart rate")
+      .default_value(std::string("0.001"));
 
   try {
     program.parse_args(argc, argv);
@@ -47,11 +50,12 @@ int main(int argc, char* argv[])
   const auto N = std::stoi(program.get<std::string>("num"));
   const auto ins = scen_name.size() > 0 ? Instance(scen_name, map_name, N)
                                         : Instance(map_name, &MT, N);
+  const auto restart_rate = std::stof(program.get<std::string>("restart_rate"));
   if (!ins.is_valid(1)) return 1;
 
   // solve
   const auto deadline = Deadline(time_limit_sec * 1000);
-  const auto solution = solve(ins, verbose - 1, &deadline, &MT);
+  const auto solution = solve(ins, verbose - 1, &deadline, &MT, restart_rate);
   const auto comp_time_ms = deadline.elapsed_ms();
 
   // failure

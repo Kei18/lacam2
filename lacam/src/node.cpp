@@ -1,9 +1,7 @@
 #include "../include/node.hpp"
 
-#include <random>
-
 // for high-level
-Node::Node(Config _C, DistTable& D, Node* _parent)
+Node::Node(const Config& _C, DistTable& D, Node* _parent)
     : C(_C),
       parent(_parent),
       depth(_parent == nullptr ? 0 : _parent->depth + 1),
@@ -17,25 +15,22 @@ Node::Node(Config _C, DistTable& D, Node* _parent)
   // set priorities
   if (parent == nullptr) {
     // initialize
-    for (auto i = 0; i < N; ++i) {
-      priorities[i] = std::make_tuple(0, 0, (float)D.get(i, C[i]) / N);
-    }
-
+    for (uint i = 0; i < N; ++i)
+      priorities[i] = {0, 0, (float)D.get(i, C[i]) / N};
   } else {
     // dynamic priorities, akin to PIBT
-    for (auto i = 0; i < N; ++i) {
-      auto p =
-          (D.get(i, C[i]) != 0) ? (std::get<0>(parent->priorities[i]) + 1) : 0;
-      auto q =
-          (D.get(i, C[i]) == 0) ? std::get<1>(parent->priorities[i]) - 1 : 0;
-      priorities[i] = std::make_tuple(p, q, std::get<2>(parent->priorities[i]));
+    for (uint i = 0; i < N; ++i) {
+      priorities[i] = {
+          (D.get(i, C[i]) != 0) ? std::get<0>(parent->priorities[i]) + 1 : 0,
+          (D.get(i, C[i]) == 0) ? std::get<1>(parent->priorities[i]) - 1 : 0,
+          std::get<2>(parent->priorities[i])};
     }
   }
 
   // set order
   std::iota(order.begin(), order.end(), 0);
   std::sort(order.begin(), order.end(),
-            [&](int i, int j) { return priorities[i] > priorities[j]; });
+            [&](uint i, uint j) { return priorities[i] > priorities[j]; });
 }
 
 Node::~Node()
