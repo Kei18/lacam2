@@ -2,11 +2,12 @@
 
 Planner::Planner(const Instance* _ins, const Deadline* _deadline,
                  std::mt19937* _MT, const int _verbose,
-                 const float _restart_rate)
+                 const Objective _objective, const float _restart_rate)
     : ins(_ins),
       deadline(_deadline),
       MT(_MT),
       verbose(_verbose),
+      objective(_objective),
       RESTART_RATE(_restart_rate),
       N(ins->N),
       V_size(ins->G.size()),
@@ -37,7 +38,7 @@ Solution Planner::solve()
   solver_info(1, "start search");
 
   // insert initial node
-  auto S_init = new Node(ins->starts, D);
+  auto S_init = new Node(ins->starts, D, nullptr, 0, get_h_value(ins->starts));
   OPEN.push(S_init);
   CLOSED[S_init->C] = S_init;
 
@@ -67,6 +68,7 @@ Solution Planner::solve()
     if (S_goal == nullptr && is_same_config(S->C, ins->goals)) {
       S_goal = S;
       solver_info(1, "found solution, cost: ", S->g);
+      if (objective == OBJ_NONE) break;
       OPEN.pop();         // discard
       OPEN.push(S_init);  // re-start
       continue;
@@ -95,7 +97,8 @@ Solution Planner::solve()
       if (S_goal == nullptr || T->f < S_goal->f) OPEN.push(T);
     } else {
       // insert new search node
-      const auto S_new = new Node(C_new, D, S);
+      const auto S_new = new Node(
+          C_new, D, S, S->g + get_edge_cost(S->C, C_new), get_h_value(C_new));
       CLOSED[S_new->C] = S_new;
       if (S_goal == nullptr || S_new->f < S_goal->f) OPEN.push(S_new);
     }
@@ -112,9 +115,9 @@ Solution Planner::solve()
   }
 
   if (S_goal != nullptr && OPEN.empty()) {
-    solver_info(1, "optimally solved");
+    solver_info(1, "solved optimally, objective: ", objective);
   } else if (S_goal != nullptr) {
-    solver_info(1, "sub-optimally solved");
+    solver_info(1, "solved sub-optimally, objective: ", objective);
   } else if (OPEN.empty()) {
     solver_info(1, "no solution");
   } else {
@@ -122,6 +125,66 @@ Solution Planner::solve()
   }
 
   return solution;
+}
+
+void Planner::rewrite(Node* S, Node* T)
+{
+  S->neighbor[T->id] = T;
+  auto c = S->g + get_edge_cost(S, T);
+  if (c >= T->g) return;  // no need to update costs
+
+  // update neighbors
+  std::queue<Node*> Q;
+  Q.push(S);
+  while (!Q.empty()) {
+    auto U = Q.front();
+    Q.pop();
+    for (auto iter : U->neighbor) {
+      auto W = iter.second;
+      if (U == S && W != T) continue;  // skip redundant check
+      auto c = U->g + get_edge_cost(U, W);
+      if (c < W->g) {
+        if (W == S_goal) solver_info(1, "cost update: ", W->g, " -> ", c);
+        W->g = c;
+        W->f = W->g + W->h;
+        W->parent = U;
+        Q.push(W);
+        if (S_goal != nullptr && W->f < S_goal->f) OPEN.push(W);
+      }
+    }
+  }
+}
+
+uint Planner::get_edge_cost(const Config& C1, const Config& C2)
+{
+  if (objective == OBJ_GOAL_STAYING) {
+    uint cost = 0;
+    for (uint i = 0; i < N; ++i) {
+      if (C1[i] != ins->goals[i] || C2[i] != ins->goals[i]) {
+        cost += 1;
+      }
+    }
+    return cost;
+  }
+
+  // default: makespan
+  return 1;
+}
+
+uint Planner::get_edge_cost(Node* S, Node* T)
+{
+  return get_edge_cost(S->C, T->C);
+}
+
+uint Planner::get_h_value(const Config& C)
+{
+  uint cost = 0;
+  if (objective == OBJ_MAKESPAN) {
+    for (size_t i = 0; i < N; ++i) cost = std::max(cost, D.get(i, C[i]));
+  } else if (objective == OBJ_GOAL_STAYING) {
+    for (size_t i = 0; i < N; ++i) cost += D.get(i, C[i]);
+  }
+  return cost;
 }
 
 void Planner::expand_lowlevel_tree(Node* S, Constraint* M)
@@ -135,36 +198,6 @@ void Planner::expand_lowlevel_tree(Node* S, Constraint* M)
   // insert
   for (auto v : C) S->search_tree.push(new Constraint(M, i, v));
 }
-
-void Planner::rewrite(Node* S, Node* T)
-{
-  S->neighbor[T->id] = T;
-  auto c = S->g + get_edge_cost(S, T);
-  if (c >= T->g) return;  // no need to update costs
-  // update neighbors
-  std::queue<Node*> Q;
-  Q.push(T);
-  while (!Q.empty()) {
-    auto U = Q.front();
-    Q.pop();
-    for (auto iter : U->neighbor) {
-      auto W = iter.second;
-      auto c = U->g + get_edge_cost(U, W);
-      if (c < W->g) {
-        if (W == S_goal) {
-          solver_info(1, "cost update: ", W->g, " -> ", c);
-        }
-        W->g = c;
-        W->f = W->g + W->h;
-        W->parent = U;
-        Q.push(W);
-        if (S_goal != nullptr && W->f < S_goal->f) OPEN.push(W);
-      }
-    }
-  }
-}
-
-uint Planner::get_edge_cost(Node* S, Node* T) { return 1; }
 
 bool Planner::get_new_config(Node* S, Constraint* M)
 {
@@ -357,9 +390,22 @@ bool Planner::is_pullable(Vertex* v_now, Vertex* v_opposite)
   return false;
 }
 
-Solution solve(const Instance& ins, const int verbose, const Deadline* deadline,
-               std::mt19937* MT, const float restart_rate)
+std::ostream& operator<<(std::ostream& os, const Objective obj)
 {
-  auto planner = Planner(&ins, deadline, MT, verbose, restart_rate);
+  if (obj == OBJ_NONE) {
+    os << "none";
+  } else if (obj == OBJ_MAKESPAN) {
+    os << "makespan";
+  } else if (obj == OBJ_GOAL_STAYING) {
+    os << "goal_staying";
+  }
+  return os;
+}
+
+Solution solve(const Instance& ins, const int verbose, const Deadline* deadline,
+               std::mt19937* MT, const Objective objective,
+               const float restart_rate)
+{
+  auto planner = Planner(&ins, deadline, MT, verbose, objective, restart_rate);
   return planner.solve();
 }

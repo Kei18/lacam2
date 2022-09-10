@@ -21,8 +21,8 @@ struct Node {
   std::vector<uint> order;
   std::queue<Constraint*> search_tree;
 
-  Node(const Config& _C, DistTable& D, Node* _parent = nullptr);
+  Node(const Config& _C, DistTable& D, Node* _parent, const uint _g,
+       const uint _h);
   ~Node();
-  static uint get_h_value(const Config& C, DistTable& D);
 };
 using Nodes = std::vector<Node*>;

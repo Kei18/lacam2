@@ -3,13 +3,14 @@
 uint Node::NODE_CNT = 0;
 
 // for high-level
-Node::Node(const Config& _C, DistTable& D, Node* _parent)
+Node::Node(const Config& _C, DistTable& D, Node* _parent, const uint _g,
+           const uint _h)
     : id(++NODE_CNT),
       C(_C),
       parent(_parent),
       neighbor(std::unordered_map<uint, Node*>()),
-      g(_parent == nullptr ? 0 : _parent->g + 1),
-      h(get_h_value(C, D)),
+      g(_g),
+      h(_h),
       f(g + h),
       priorities(C.size()),
       order(C.size(), 0),
@@ -19,7 +20,7 @@ Node::Node(const Config& _C, DistTable& D, Node* _parent)
   const auto N = C.size();
 
   // update neighbor
-  if (parent != nullptr) neighbor[parent->id] = parent;
+  if (parent != nullptr) parent->neighbor[id] = this;
 
   // set priorities
   if (parent == nullptr) {
@@ -48,14 +49,4 @@ Node::~Node()
     delete search_tree.front();
     search_tree.pop();
   }
-}
-
-uint Node::get_h_value(const Config& C, DistTable& D)
-{
-  uint cost = 0;
-  auto N = C.size();
-  for (size_t i = 0; i < N; ++i) {
-    cost = std::max(cost, D.get(i, C[i]));
-  }
-  return cost;
 }
