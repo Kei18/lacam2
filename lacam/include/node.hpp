@@ -14,7 +14,7 @@ struct Node {
   std::unordered_map<uint, Node*> neighbor;
   // costs
   uint g;
-  uint h;
+  const uint h;
   uint f;
   // low-level search
   std::vector<std::tuple<int, int, float>> priorities;
@@ -23,5 +23,6 @@ struct Node {
 
   Node(const Config& _C, DistTable& D, Node* _parent = nullptr);
   ~Node();
+  static uint get_h_value(const Config& C, DistTable& D);
 };
 using Nodes = std::vector<Node*>;

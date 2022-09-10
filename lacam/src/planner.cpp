@@ -41,8 +41,6 @@ Solution Planner::solve()
   OPEN.push(S_init);
   CLOSED[S_init->C] = S_init;
 
-  int pop_cnt = 0;
-
   // BFS
   std::vector<Config> solution;
   auto C_new = Config(N, nullptr);  // new configuration
@@ -56,7 +54,12 @@ Solution Planner::solve()
     // low-level search end
     if (S->search_tree.empty()) {
       OPEN.pop();
-      ++pop_cnt;
+      continue;
+    }
+
+    // check lower bounds
+    if (S_goal != nullptr && S->f >= S_goal->f) {
+      OPEN.pop();
       continue;
     }
 
@@ -90,8 +93,8 @@ Solution Planner::solve()
     } else {
       // insert new search node
       const auto S_new = new Node(C_new, D, S);
-      OPEN.push(S_new);
       CLOSED[S_new->C] = S_new;
+      if (S_goal == nullptr || S_new->f < S_goal->f) OPEN.push(S_new);
     }
   }
 
@@ -133,7 +136,7 @@ void Planner::expand_lowlevel_tree(Node* S, Constraint* M)
 void Planner::rewrite(Node* S, Node* T)
 {
   S->neighbor[T->id] = T;
-  if (S->g + 1 >= T->g) return;  // no need to update costs
+  if (S->g + get_edge_cost(S, T) >= T->g) return;  // no need to update costs
   std::queue<Node*> Q;
   Q.push(S);
   while (!Q.empty()) {
@@ -141,16 +144,20 @@ void Planner::rewrite(Node* S, Node* T)
     Q.pop();
     for (auto iter : U->neighbor) {
       auto W = iter.second;
-      if (U->g + 1 < W->g) {
-        if (W == S_goal)
-          solver_info(1, "cost update: ", W->g, " -> ", U->g + 1);
-        W->g = U->g + 1;
+      auto c = U->g + get_edge_cost(U, W);
+      if (c < W->g) {
+        if (W == S_goal) solver_info(1, "cost update: ", W->g, " -> ", c);
+        W->g = c;
+        W->f = W->g + W->h;
         W->parent = U;
         Q.push(W);
+        if (S_goal != nullptr && W->f < S_goal->f) OPEN.push(W);
       }
     }
   }
 }
+
+uint Planner::get_edge_cost(Node* S, Node* T) { return 1; }
 
 bool Planner::get_new_config(Node* S, Constraint* M)
 {

@@ -46,6 +46,7 @@ struct Planner {
   Solution solve();
   void expand_lowlevel_tree(Node* S, Constraint* M);
   void rewrite(Node* S, Node* T);
+  uint get_edge_cost(Node* S, Node* T);
   bool get_new_config(Node* S, Constraint* M);
   bool funcPIBT(Agent* ai, Agent* aj = nullptr);
   bool is_swap_required(uint id_h, uint id_l, Vertex* v_now_h, Vertex* v_now_l);
