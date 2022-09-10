@@ -18,13 +18,21 @@ int main(int argc, char* argv[])
       .default_value(std::string("0"));
   program.add_argument("-t", "--time_limit_sec")
       .help("time limit sec")
-      .default_value(std::string("10"));
+      .default_value(std::string("3"));
   program.add_argument("-o", "--output")
       .help("output file")
       .default_value(std::string("./build/result.txt"));
   program.add_argument("-l", "--log_short")
       .default_value(false)
       .implicit_value(true);
+  program.add_argument("-O", "--objective")
+      .help("0: none, 1: makespan, 2: sum_of_non_goal_actions")
+      .default_value(std::string("0"))
+      .action([](const std::string& value) {
+        static const std::vector<std::string> C = {"0", "1", "2"};
+        if (std::find(C.begin(), C.end(), value) != C.end()) return value;
+        return std::string("0");
+      });
   program.add_argument("-r", "--restart_rate")
       .help("restart rate")
       .default_value(std::string("0.001"));
@@ -50,12 +58,15 @@ int main(int argc, char* argv[])
   const auto N = std::stoi(program.get<std::string>("num"));
   const auto ins = scen_name.size() > 0 ? Instance(scen_name, map_name, N)
                                         : Instance(map_name, &MT, N);
+  const auto objective =
+      static_cast<Objective>(std::stoi(program.get<std::string>("objective")));
   const auto restart_rate = std::stof(program.get<std::string>("restart_rate"));
   if (!ins.is_valid(1)) return 1;
 
   // solve
   const auto deadline = Deadline(time_limit_sec * 1000);
-  const auto solution = solve(ins, verbose - 1, &deadline, &MT, restart_rate);
+  const auto solution =
+      solve(ins, verbose - 1, &deadline, &MT, objective, restart_rate);
   const auto comp_time_ms = deadline.elapsed_ms();
 
   // failure

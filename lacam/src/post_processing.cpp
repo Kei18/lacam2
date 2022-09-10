@@ -76,6 +76,21 @@ int get_sum_of_costs(const Solution& solution)
   return c;
 }
 
+int get_sum_of_non_goal_acions(const Solution& solution)
+{
+  if (solution.empty()) return 0;
+  int c = 0;
+  const auto N = solution.front().size();
+  const auto T = solution.size();
+  for (size_t i = 0; i < N; ++i) {
+    auto g = solution.back()[i];
+    for (size_t t = 1; t < T; ++t) {
+      if (solution[t - 1][i] != g || solution[t][i] != g) ++c;
+    }
+  }
+  return c;
+}
+
 int get_makespan_lower_bound(const Instance& ins, DistTable& dist_table)
 {
   uint c = 0;
@@ -97,15 +112,20 @@ int get_sum_of_costs_lower_bound(const Instance& ins, DistTable& dist_table)
 void print_stats(const int verbose, const Instance& ins,
                  const Solution& solution, const double comp_time_ms)
 {
+  auto ceil = [](float x) { return std::ceil(x * 100) / 100; };
   auto dist_table = DistTable(ins);
   const auto makespan = get_makespan(solution);
   const auto makespan_lb = get_makespan_lower_bound(ins, dist_table);
   const auto sum_of_costs = get_sum_of_costs(solution);
   const auto sum_of_costs_lb = get_sum_of_costs_lower_bound(ins, dist_table);
+  const auto sum_of_non_goal_actions = get_sum_of_non_goal_acions(solution);
   info(1, verbose, "solved: ", comp_time_ms, "ms", "\tmakespan: ", makespan,
-       " (lb=", makespan_lb, ", sub-opt-ub=", (double)makespan / makespan_lb,
-       ")", "\tsum_of_costs: ", sum_of_costs, " (lb=", sum_of_costs_lb,
-       ", sub-opt-ub=", (double)sum_of_costs / sum_of_costs_lb, ")");
+       " (lb=", makespan_lb, ", ub=", ceil((float)makespan / makespan_lb), ")",
+       "\tsum_of_costs: ", sum_of_costs, " (lb=", sum_of_costs_lb,
+       ", ub=", ceil((float)sum_of_costs / sum_of_costs_lb), ")",
+       "\tsum_of_non_goal_actions: ", sum_of_non_goal_actions,
+       " (lb=", sum_of_costs_lb,
+       ", ub=", ceil((float)sum_of_non_goal_actions / sum_of_costs_lb), ")");
 }
 
 // for log of map_name

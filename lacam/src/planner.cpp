@@ -2,63 +2,55 @@
 
 Planner::Planner(const Instance* _ins, const Deadline* _deadline,
                  std::mt19937* _MT, const int _verbose,
-                 const float _restart_rate)
+                 const Objective _objective, const float _restart_rate)
     : ins(_ins),
       deadline(_deadline),
       MT(_MT),
       verbose(_verbose),
+      objective(_objective),
       RESTART_RATE(_restart_rate),
       N(ins->N),
       V_size(ins->G.size()),
       D(DistTable(ins)),
+      OPEN(std::stack<Node*>()),
+      CLOSED(std::unordered_map<Config, Node*, ConfigHasher>()),
+      S_goal(nullptr),
+      loop_cnt(0),
       C_next(Candidates(N, std::array<Vertex*, 5>())),
       tie_breakers(std::vector<float>(V_size, 0)),
       A(Agents(N, nullptr)),
       occupied_now(Agents(V_size, nullptr)),
       occupied_next(Agents(V_size, nullptr))
 {
+  // setup agents
+  for (uint i = 0; i < N; ++i) A[i] = new Agent(i);
+}
+
+Planner::~Planner()
+{
+  // memory management
+  for (auto a : A) delete a;
+  for (auto p : CLOSED) delete p.second;
 }
 
 Solution Planner::solve()
 {
-  info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\tstart search");
-
-  // setup agents
-  for (uint i = 0; i < N; ++i) A[i] = new Agent(i);
-
-  // setup search queues
-  std::stack<Node*> OPEN;
-  std::unordered_map<Config, Node*, ConfigHasher> CLOSED;
+  solver_info(1, "start search");
 
   // insert initial node
-  auto S_init = new Node(ins->starts, D);
+  auto S_init = new Node(ins->starts, D, nullptr, 0, get_h_value(ins->starts));
   OPEN.push(S_init);
   CLOSED[S_init->C] = S_init;
 
-  // best first search
-  uint loop_cnt = 0;
+  // BFS
   std::vector<Config> solution;
-  auto C_new = Config(N, nullptr);       // new configuration
-  auto C_lowlevel = Config(5, nullptr);  // to generate low-level nodes
+  auto C_new = Config(N, nullptr);  // new configuration
 
   while (!OPEN.empty() && !is_expired(deadline)) {
     loop_cnt += 1;
 
     // do not pop here!
     auto S = OPEN.top();
-    info(3, verbose, "elapsed:", elapsed_ms(deadline), "ms",
-         "\titer:", loop_cnt, "\tdepth:", S->depth, "\tconfig:", S->C);
-
-    // check goal condition
-    if (is_same_config(S->C, ins->goals)) {
-      // backtrack
-      while (S != nullptr) {
-        solution.push_back(S->C);
-        S = S->parent;
-      }
-      std::reverse(solution.begin(), solution.end());
-      break;
-    }
 
     // low-level search end
     if (S->search_tree.empty()) {
@@ -66,21 +58,26 @@ Solution Planner::solve()
       continue;
     }
 
+    // check lower bounds
+    if (S_goal != nullptr && S->f >= S_goal->f) {
+      OPEN.pop();
+      continue;
+    }
+
+    // check goal condition
+    if (S_goal == nullptr && is_same_config(S->C, ins->goals)) {
+      S_goal = S;
+      solver_info(1, "found solution, cost: ", S->g);
+      if (objective == OBJ_NONE) break;
+      OPEN.pop();         // discard
+      OPEN.push(S_init);  // re-start
+      continue;
+    }
+
     // create successors at the low-level search
     auto M = S->search_tree.front();
     S->search_tree.pop();
-    if (M->depth < N) {
-      const auto i = S->order[M->depth];
-      const auto K = S->C[i]->neighbor.size();
-      for (size_t k = 0; k < K; ++k) C_lowlevel[k] = S->C[i]->neighbor[k];
-      C_lowlevel[K] = S->C[i];
-      // randomize
-      if (MT != nullptr)
-        std::shuffle(C_lowlevel.begin(), C_lowlevel.begin() + K + 1, *MT);
-      // insert
-      for (size_t k = 0; k <= K; ++k)
-        S->search_tree.push(new Constraint(M, i, C_lowlevel[k]));
-    }
+    expand_lowlevel_tree(S, M);
 
     // create successors at the high-level search
     const auto res = get_new_config(S, M);
@@ -93,33 +90,113 @@ Solution Planner::solve()
     // check explored list
     const auto iter = CLOSED.find(C_new);
     if (iter != CLOSED.end()) {
-      if (get_random_float(MT) < RESTART_RATE) {
-        info(2, verbose, "elapsed:", elapsed_ms(deadline), "ms",
-             "\titer:", loop_cnt, "\tdepth:", S->depth, "\tre-start");
-        OPEN.push(S_init);
-      } else {
-        info(2, verbose, "elapsed:", elapsed_ms(deadline), "ms",
-             "\titer:", loop_cnt, "\tdepth:", S->depth, "\tre-insert");
-        OPEN.push(iter->second);
-      }
-      continue;
+      // case found
+      rewrite(S, iter->second);
+      // re-insert or random-restart
+      auto T = get_random_float(MT) >= RESTART_RATE ? iter->second : S_init;
+      if (S_goal == nullptr || T->f < S_goal->f) OPEN.push(T);
+    } else {
+      // insert new search node
+      const auto S_new = new Node(
+          C_new, D, S, S->g + get_edge_cost(S->C, C_new), get_h_value(C_new));
+      CLOSED[S_new->C] = S_new;
+      if (S_goal == nullptr || S_new->f < S_goal->f) OPEN.push(S_new);
     }
-
-    // insert new search node
-    const auto S_new = new Node(C_new, D, S);
-    OPEN.push(S_new);
-    CLOSED[S_new->C] = S_new;
   }
 
-  info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\t",
-       solution.empty() ? "failed" : "solution found", "\titer:", loop_cnt,
-       "\texplored:", CLOSED.size());
+  // backtrack
+  if (S_goal != nullptr) {
+    auto S = S_goal;
+    while (S != nullptr) {
+      solution.push_back(S->C);
+      S = S->parent;
+    }
+    std::reverse(solution.begin(), solution.end());
+  }
 
-  // memory management
-  for (auto a : A) delete a;
-  for (auto p : CLOSED) delete p.second;
+  if (S_goal != nullptr && OPEN.empty()) {
+    solver_info(1, "solved optimally, objective: ", objective);
+  } else if (S_goal != nullptr) {
+    solver_info(1, "solved sub-optimally, objective: ", objective);
+  } else if (OPEN.empty()) {
+    solver_info(1, "no solution");
+  } else {
+    solver_info(1, "timeout");
+  }
 
   return solution;
+}
+
+void Planner::rewrite(Node* S, Node* T)
+{
+  S->neighbor[T->id] = T;
+  auto c = S->g + get_edge_cost(S, T);
+  if (c >= T->g) return;  // no need to update costs
+
+  // update neighbors
+  std::queue<Node*> Q;
+  Q.push(S);
+  while (!Q.empty()) {
+    auto U = Q.front();
+    Q.pop();
+    for (auto iter : U->neighbor) {
+      auto W = iter.second;
+      if (U == S && W != T) continue;  // skip redundant check
+      auto c = U->g + get_edge_cost(U, W);
+      if (c < W->g) {
+        if (W == S_goal) solver_info(1, "cost update: ", W->g, " -> ", c);
+        W->g = c;
+        W->f = W->g + W->h;
+        W->parent = U;
+        Q.push(W);
+        if (S_goal != nullptr && W->f < S_goal->f) OPEN.push(W);
+      }
+    }
+  }
+}
+
+uint Planner::get_edge_cost(const Config& C1, const Config& C2)
+{
+  if (objective == OBJ_NON_GOAL_ACTIONS) {
+    uint cost = 0;
+    for (uint i = 0; i < N; ++i) {
+      if (C1[i] != ins->goals[i] || C2[i] != ins->goals[i]) {
+        cost += 1;
+      }
+    }
+    return cost;
+  }
+
+  // default: makespan
+  return 1;
+}
+
+uint Planner::get_edge_cost(Node* S, Node* T)
+{
+  return get_edge_cost(S->C, T->C);
+}
+
+uint Planner::get_h_value(const Config& C)
+{
+  uint cost = 0;
+  if (objective == OBJ_MAKESPAN) {
+    for (size_t i = 0; i < N; ++i) cost = std::max(cost, D.get(i, C[i]));
+  } else if (objective == OBJ_NON_GOAL_ACTIONS) {
+    for (size_t i = 0; i < N; ++i) cost += D.get(i, C[i]);
+  }
+  return cost;
+}
+
+void Planner::expand_lowlevel_tree(Node* S, Constraint* M)
+{
+  if (M->depth >= N) return;
+  const auto i = S->order[M->depth];
+  auto C = S->C[i]->neighbor;
+  C.push_back(S->C[i]);
+  // randomize
+  if (MT != nullptr) std::shuffle(C.begin(), C.end(), *MT);
+  // insert
+  for (auto v : C) S->search_tree.push(new Constraint(M, i, v));
 }
 
 bool Planner::get_new_config(Node* S, Constraint* M)
@@ -313,10 +390,22 @@ bool Planner::is_pullable(Vertex* v_now, Vertex* v_opposite)
   return false;
 }
 
-Solution solve(const Instance& ins, const int verbose, const Deadline* deadline,
-               std::mt19937* MT, const float restart_rate)
+std::ostream& operator<<(std::ostream& os, const Objective obj)
 {
-  info(1, verbose, "elapsed:", elapsed_ms(deadline), "ms\tpre-processing");
-  auto planner = Planner(&ins, deadline, MT, verbose, restart_rate);
+  if (obj == OBJ_NONE) {
+    os << "none";
+  } else if (obj == OBJ_MAKESPAN) {
+    os << "makespan";
+  } else if (obj == OBJ_NON_GOAL_ACTIONS) {
+    os << "sum_of_non_goal_actions";
+  }
+  return os;
+}
+
+Solution solve(const Instance& ins, const int verbose, const Deadline* deadline,
+               std::mt19937* MT, const Objective objective,
+               const float restart_rate)
+{
+  auto planner = Planner(&ins, deadline, MT, verbose, objective, restart_rate);
   return planner.solve();
 }
