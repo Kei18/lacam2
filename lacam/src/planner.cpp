@@ -67,6 +67,9 @@ Solution Planner::solve()
     if (S_goal == nullptr && is_same_config(S->C, ins->goals)) {
       S_goal = S;
       solver_info(1, "found solution, cost: ", S->g);
+      OPEN.pop();         // discard
+      OPEN.push(S_init);  // re-start
+      continue;
     }
 
     // create successors at the low-level search
@@ -88,8 +91,8 @@ Solution Planner::solve()
       // case found
       rewrite(S, iter->second);
       // re-insert or random-restart
-      // OPEN.push(get_random_float(MT) >= RESTART_RATE ? iter->second :
-      // S_init);
+      auto T = get_random_float(MT) >= RESTART_RATE ? iter->second : S_init;
+      if (S_goal == nullptr || T->f < S_goal->f) OPEN.push(T);
     } else {
       // insert new search node
       const auto S_new = new Node(C_new, D, S);
@@ -111,7 +114,7 @@ Solution Planner::solve()
   if (S_goal != nullptr && OPEN.empty()) {
     solver_info(1, "optimally solved");
   } else if (S_goal != nullptr) {
-    solver_info(1, "solved");
+    solver_info(1, "sub-optimally solved");
   } else if (OPEN.empty()) {
     solver_info(1, "no solution");
   } else {
@@ -136,9 +139,11 @@ void Planner::expand_lowlevel_tree(Node* S, Constraint* M)
 void Planner::rewrite(Node* S, Node* T)
 {
   S->neighbor[T->id] = T;
-  if (S->g + get_edge_cost(S, T) >= T->g) return;  // no need to update costs
+  auto c = S->g + get_edge_cost(S, T);
+  if (c >= T->g) return;  // no need to update costs
+  // update neighbors
   std::queue<Node*> Q;
-  Q.push(S);
+  Q.push(T);
   while (!Q.empty()) {
     auto U = Q.front();
     Q.pop();
@@ -146,7 +151,9 @@ void Planner::rewrite(Node* S, Node* T)
       auto W = iter.second;
       auto c = U->g + get_edge_cost(U, W);
       if (c < W->g) {
-        if (W == S_goal) solver_info(1, "cost update: ", W->g, " -> ", c);
+        if (W == S_goal) {
+          solver_info(1, "cost update: ", W->g, " -> ", c);
+        }
         W->g = c;
         W->f = W->g + W->h;
         W->parent = U;

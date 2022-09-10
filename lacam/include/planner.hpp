@@ -33,7 +33,7 @@ struct Planner {
   std::stack<Node*> OPEN;
   std::unordered_map<Config, Node*, ConfigHasher> CLOSED;
   Node* S_goal;                     // auxiliary, goal node
-  int loop_cnt;                     // auxiliary
+  uint loop_cnt;                    // auxiliary
   Candidates C_next;                // used in PIBT
   std::vector<float> tie_breakers;  // random values, used in PIBT
   Agents A;
