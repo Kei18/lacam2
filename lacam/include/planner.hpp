@@ -20,7 +20,7 @@ using Agents = std::vector<Agent*>;
 using Candidates = std::vector<std::array<Vertex*, 5> >;
 
 // objective function
-enum Objective { OBJ_NONE, OBJ_MAKESPAN, OBJ_GOAL_STAYING };
+enum Objective { OBJ_NONE, OBJ_MAKESPAN, OBJ_NON_GOAL_ACTIONS };
 std::ostream& operator<<(std::ostream& os, const Objective objective);
 
 struct Planner {
