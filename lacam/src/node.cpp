@@ -1,14 +1,16 @@
 #include "../include/node.hpp"
 
-static uint NODE_ID = 0;
+uint Node::NODE_CNT = 0;
 
 // for high-level
 Node::Node(const Config& _C, DistTable& D, Node* _parent)
-    : id(++NODE_ID),
+    : id(++NODE_CNT),
       C(_C),
       parent(_parent),
-      children(std::unordered_map<uint, Node*>()),
-      depth(_parent == nullptr ? 0 : _parent->depth + 1),
+      neighbor(std::unordered_map<uint, Node*>()),
+      g(_parent == nullptr ? 0 : _parent->g + 1),
+      h(0),
+      f(g + h),
       priorities(C.size()),
       order(C.size(), 0),
       search_tree(std::queue<Constraint*>())
@@ -16,8 +18,8 @@ Node::Node(const Config& _C, DistTable& D, Node* _parent)
   search_tree.push(new Constraint());
   const auto N = C.size();
 
-  // update children of parent
-  if (parent != nullptr) parent->children[id] = this;
+  // update neighbor
+  if (parent != nullptr) neighbor[parent->id] = parent;
 
   // set priorities
   if (parent == nullptr) {

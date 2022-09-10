@@ -34,7 +34,6 @@ struct Planner {
   std::unordered_map<Config, Node*, ConfigHasher> CLOSED;
   Node* S_goal;                     // auxiliary, goal node
   int loop_cnt;                     // auxiliary
-  int node_cnt;                     // auxiliary
   Candidates C_next;                // used in PIBT
   std::vector<float> tie_breakers;  // random values, used in PIBT
   Agents A;
@@ -46,7 +45,7 @@ struct Planner {
   ~Planner();
   Solution solve();
   void expand_lowlevel_tree(Node* S, Constraint* M);
-  void update_cost(Node* S_from, Node* S_to);
+  void rewrite(Node* S, Node* T);
   bool get_new_config(Node* S, Constraint* M);
   bool funcPIBT(Agent* ai, Agent* aj = nullptr);
   bool is_swap_required(uint id_h, uint id_l, Vertex* v_now_h, Vertex* v_now_l);
@@ -58,7 +57,7 @@ struct Planner {
     if (verbose < level) return;
     std::cout << "elapsed:" << std::setw(6) << elapsed_ms(deadline) << "ms"
               << "  loop_cnt:" << std::setw(8) << loop_cnt
-              << "  node_cnt:" << std::setw(8) << node_cnt << "\t";
+              << "  node_cnt:" << std::setw(8) << Node::NODE_CNT << "\t";
     info(level, verbose, (body)...);
   }
 };

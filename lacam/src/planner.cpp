@@ -15,7 +15,6 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
       CLOSED(std::unordered_map<Config, Node*, ConfigHasher>()),
       S_goal(nullptr),
       loop_cnt(0),
-      node_cnt(0),
       C_next(Candidates(N, std::array<Vertex*, 5>())),
       tie_breakers(std::vector<float>(V_size, 0)),
       A(Agents(N, nullptr)),
@@ -40,8 +39,9 @@ Solution Planner::solve()
   // insert initial node
   auto S_init = new Node(ins->starts, D);
   OPEN.push(S_init);
-  ++node_cnt;
   CLOSED[S_init->C] = S_init;
+
+  int pop_cnt = 0;
 
   // BFS
   std::vector<Config> solution;
@@ -56,27 +56,14 @@ Solution Planner::solve()
     // low-level search end
     if (S->search_tree.empty()) {
       OPEN.pop();
-      continue;
-    }
-
-    // check upper bound
-    if (S_goal != nullptr && S->depth >= S_goal->depth) {
-      OPEN.pop();
+      ++pop_cnt;
       continue;
     }
 
     // check goal condition
-    if (is_same_config(S->C, ins->goals)) {
-      if (S_goal == nullptr) {
-        S_goal = S;
-        solver_info(1, "found solution, cost: ", S->depth);
-      }
-      // random insert
-      // auto S_rand = std::next(std::begin(CLOSED),
-      //                         get_random_int(MT, 0, CLOSED.size() - 1))
-      //                   ->second;
-      // OPEN.push(S_rand);
-      continue;
+    if (S_goal == nullptr && is_same_config(S->C, ins->goals)) {
+      S_goal = S;
+      solver_info(1, "found solution, cost: ", S->g);
     }
 
     // create successors at the low-level search
@@ -96,14 +83,14 @@ Solution Planner::solve()
     const auto iter = CLOSED.find(C_new);
     if (iter != CLOSED.end()) {
       // case found
-      update_cost(S, iter->second);
+      rewrite(S, iter->second);
       // re-insert or random-restart
-      OPEN.push(get_random_float(MT) >= RESTART_RATE ? iter->second : S_init);
+      // OPEN.push(get_random_float(MT) >= RESTART_RATE ? iter->second :
+      // S_init);
     } else {
       // insert new search node
       const auto S_new = new Node(C_new, D, S);
       OPEN.push(S_new);
-      ++node_cnt;
       CLOSED[S_new->C] = S_new;
     }
   }
@@ -143,25 +130,25 @@ void Planner::expand_lowlevel_tree(Node* S, Constraint* M)
   for (auto v : C) S->search_tree.push(new Constraint(M, i, v));
 }
 
-void Planner::update_cost(Node* S_from, Node* S_to)
+void Planner::rewrite(Node* S, Node* T)
 {
-  if (S_to->depth <= S_from->depth + 1) return;
-
-  // update tree structure
-  S_to->parent->children.erase(S_to->id);
-  S_to->parent = S_from;
-  S_from->children[S_to->id] = S_to;
-  // update children costs using BFS
+  S->neighbor[T->id] = T;
+  if (S->g + 1 >= T->g) return;  // no need to update costs
   std::queue<Node*> Q;
-  Q.push(S_to);
+  Q.push(S);
   while (!Q.empty()) {
-    auto S = Q.front();
+    auto U = Q.front();
     Q.pop();
-    if (S == S_goal)
-      solver_info(1, "cost update: ", S->depth, " -> ", S->parent->depth + 1);
-    S->depth = S->parent->depth + 1;
-    if (S_goal != nullptr && S->depth < S_goal->depth) OPEN.push(S);
-    for (auto iter : S->children) Q.push(iter.second);
+    for (auto iter : U->neighbor) {
+      auto W = iter.second;
+      if (U->g + 1 < W->g) {
+        if (W == S_goal)
+          solver_info(1, "cost update: ", W->g, " -> ", U->g + 1);
+        W->g = U->g + 1;
+        W->parent = U;
+        Q.push(W);
+      }
+    }
   }
 }
 

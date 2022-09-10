@@ -6,13 +6,17 @@
 
 // high-level search node
 struct Node {
+  static uint NODE_CNT;
   const uint id;
   const Config C;
+  // tree
   Node* parent;
-  std::unordered_map<uint, Node*> children;
-  uint depth;
-
-  // for low-level search
+  std::unordered_map<uint, Node*> neighbor;
+  // costs
+  uint g;
+  uint h;
+  uint f;
+  // low-level search
   std::vector<std::tuple<int, int, float>> priorities;
   std::vector<uint> order;
   std::queue<Constraint*> search_tree;
