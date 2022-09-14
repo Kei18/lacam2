@@ -69,8 +69,6 @@ Solution Planner::solve()
       S_goal = S;
       solver_info(1, "found solution, cost: ", S->g);
       if (objective == OBJ_NONE) break;
-      OPEN.pop();         // discard
-      OPEN.push(S_init);  // re-start
       continue;
     }
 
@@ -130,10 +128,12 @@ Solution Planner::solve()
 void Planner::rewrite(Node* S, Node* T)
 {
   S->neighbor[T->id] = T;
+  T->neighbor[S->id] = S;  // since the graph is undirected
   auto c = S->g + get_edge_cost(S, T);
   if (c >= T->g) return;  // no need to update costs
 
   // update neighbors
+  // in this implementation, BFS is sufficient rather than Dijkstra
   std::queue<Node*> Q;
   Q.push(S);
   while (!Q.empty()) {
@@ -371,7 +371,7 @@ bool Planner::is_pullable(Vertex* v_now, Vertex* v_opposite)
   auto v_pre = v_opposite;
   auto v_next = v_now;
   Vertex* tmp = nullptr;
-  while (true) {
+  while (v_next != v_opposite) {  // avoid loop
     auto n = v_next->neighbor.size();
     for (auto u : v_next->neighbor) {
       auto a = occupied_now[u->id];
@@ -397,7 +397,7 @@ std::ostream& operator<<(std::ostream& os, const Objective obj)
   } else if (obj == OBJ_MAKESPAN) {
     os << "makespan";
   } else if (obj == OBJ_NON_GOAL_ACTIONS) {
-    os << "sum_of_non_goal_actions";
+    os << "sum_of_loss";
   }
   return os;
 }

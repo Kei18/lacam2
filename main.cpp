@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
       .default_value(false)
       .implicit_value(true);
   program.add_argument("-O", "--objective")
-      .help("0: none, 1: makespan, 2: sum_of_non_goal_actions")
+      .help("0: none, 1: makespan, 2: sum_of_loss")
       .default_value(std::string("0"))
       .action([](const std::string& value) {
         static const std::vector<std::string> C = {"0", "1", "2"};

@@ -76,7 +76,7 @@ int get_sum_of_costs(const Solution& solution)
   return c;
 }
 
-int get_sum_of_non_goal_acions(const Solution& solution)
+int get_sum_of_loss(const Solution& solution)
 {
   if (solution.empty()) return 0;
   int c = 0;
@@ -118,14 +118,13 @@ void print_stats(const int verbose, const Instance& ins,
   const auto makespan_lb = get_makespan_lower_bound(ins, dist_table);
   const auto sum_of_costs = get_sum_of_costs(solution);
   const auto sum_of_costs_lb = get_sum_of_costs_lower_bound(ins, dist_table);
-  const auto sum_of_non_goal_actions = get_sum_of_non_goal_acions(solution);
+  const auto sum_of_loss = get_sum_of_loss(solution);
   info(1, verbose, "solved: ", comp_time_ms, "ms", "\tmakespan: ", makespan,
        " (lb=", makespan_lb, ", ub=", ceil((float)makespan / makespan_lb), ")",
        "\tsum_of_costs: ", sum_of_costs, " (lb=", sum_of_costs_lb,
        ", ub=", ceil((float)sum_of_costs / sum_of_costs_lb), ")",
-       "\tsum_of_non_goal_actions: ", sum_of_non_goal_actions,
-       " (lb=", sum_of_costs_lb,
-       ", ub=", ceil((float)sum_of_non_goal_actions / sum_of_costs_lb), ")");
+       "\tsum_of_loss: ", sum_of_loss, " (lb=", sum_of_costs_lb,
+       ", ub=", ceil((float)sum_of_loss / sum_of_costs_lb), ")");
 }
 
 // for log of map_name
@@ -157,6 +156,7 @@ void make_log(const Instance& ins, const Solution& solution,
   log << "soc_lb=" << get_sum_of_costs_lower_bound(ins, dist_table) << "\n";
   log << "makespan=" << get_makespan(solution) << "\n";
   log << "makespan_lb=" << get_makespan_lower_bound(ins, dist_table) << "\n";
+  log << "sum_of_loss=" << get_sum_of_loss(solution) << "\n";
   log << "comp_time=" << comp_time_ms << "\n";
   log << "seed=" << seed << "\n";
   if (log_short) return;

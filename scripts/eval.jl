@@ -39,6 +39,8 @@ function main(config_file)
     num_min_agents = get(config, "num_min_agents", 10)
     num_max_agents = get(config, "num_max_agents", 1000)
     num_interval_agents = get(config, "num_interval_agents", 10)
+    solver_name = get(config, "solver_name", "LaCAM")
+    solver_options = get(config, "solver_options", [])
     maps = get(config, "maps", Vector{String}())
     all_scen = glob("assets/scen/scen-$(scen)/*.scen")
     date_str = replace(string(Dates.now()), ":" => "-")
@@ -70,11 +72,11 @@ function main(config_file)
         # solve, with multi-threading
         Threads.@threads for (k, (N, seed)) in loops
             output_file = "build/result-$(k).txt"
-            run(`build/main -m $map_file -i $scen_file -N $N -o $output_file -t $time_limit_sec -s $seed -l`)
+            run(`build/main -m $map_file -i $scen_file -N $N -o $output_file -t $time_limit_sec -s $seed -l $solver_options`)
             Threads.atomic_add!(cnt_fin, 1)
             print("\r$(cnt_fin[])/$(num_total_tasks) tasks have been finished")
             row = Dict(
-                :solver => "Lacam",
+                :solver => solver_name,
                 :num_agents => N,
                 :map_name => last(split(map_file, "/")),
                 :scen => scen_short,
@@ -89,6 +91,8 @@ function main(config_file)
                 !isnothing(m) && (row[:makespan] = parse(Int, m[1]))
                 m = match(r"makespan_lb=(\d+)", line)
                 !isnothing(m) && (row[:makespan_lb] = parse(Int, m[1]))
+                m = match(r"sum_of_loss=(\d+)", line)
+                !isnothing(m) && (row[:sum_of_loss] = parse(Int, m[1]))
                 m = match(r"comp_time=(\d+)", line)
                 !isnothing(m) && (row[:comp_time] = parse(Int, m[1]))
                 m = match(r"seed=(\d+)", line)

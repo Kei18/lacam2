@@ -20,7 +20,10 @@ Node::Node(const Config& _C, DistTable& D, Node* _parent, const uint _g,
   const auto N = C.size();
 
   // update neighbor
-  if (parent != nullptr) parent->neighbor[id] = this;
+  if (parent != nullptr) {
+    parent->neighbor[id] = this;
+    neighbor[parent->id] = parent;
+  }
 
   // set priorities
   if (parent == nullptr) {
