@@ -26,19 +26,18 @@ int main(int argc, char* argv[])
       .default_value(false)
       .implicit_value(true);
   program.add_argument("-O", "--objective")
-      .help("0: none, 1: makespan, 2: sum_of_loss")
+      .help("0: makespan, 1: sum_of_loss")
       .default_value(std::string("0"))
       .action([](const std::string& value) {
-        static const std::vector<std::string> C = {"0", "1", "2"};
+        static const std::vector<std::string> C = {"0", "1"};
         if (std::find(C.begin(), C.end(), value) != C.end()) return value;
         return std::string("0");
-      });
-  program.add_argument("-r", "--restart_rate")
+      }) program.add_argument("-r", "--restart_rate")
       .help("restart rate")
       .default_value(std::string("0.001"));
 
   try {
-    program.parse_args(argc, argv);
+    program.parse_known_args(argc, argv);
   } catch (const std::runtime_error& err) {
     std::cerr << err.what() << std::endl;
     std::cerr << program;

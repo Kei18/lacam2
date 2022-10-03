@@ -157,7 +157,7 @@ void Planner::rewrite(Node* S, Node* T)
 
 uint Planner::get_edge_cost(const Config& C1, const Config& C2)
 {
-  if (objective == OBJ_NON_GOAL_ACTIONS) {
+  if (objective == OBJ_SUM_OF_LOSS) {
     uint cost = 0;
     for (uint i = 0; i < N; ++i) {
       if (C1[i] != ins->goals[i] || C2[i] != ins->goals[i]) {
@@ -181,7 +181,7 @@ uint Planner::get_h_value(const Config& C)
   uint cost = 0;
   if (objective == OBJ_MAKESPAN) {
     for (size_t i = 0; i < N; ++i) cost = std::max(cost, D.get(i, C[i]));
-  } else if (objective == OBJ_NON_GOAL_ACTIONS) {
+  } else if (objective == OBJ_SUM_OF_LOSS) {
     for (size_t i = 0; i < N; ++i) cost += D.get(i, C[i]);
   }
   return cost;
@@ -396,7 +396,7 @@ std::ostream& operator<<(std::ostream& os, const Objective obj)
     os << "none";
   } else if (obj == OBJ_MAKESPAN) {
     os << "makespan";
-  } else if (obj == OBJ_NON_GOAL_ACTIONS) {
+  } else if (obj == OBJ_SUM_OF_LOSS) {
     os << "sum_of_loss";
   }
   return os;
