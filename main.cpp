@@ -32,7 +32,8 @@ int main(int argc, char* argv[])
         static const std::vector<std::string> C = {"0", "1"};
         if (std::find(C.begin(), C.end(), value) != C.end()) return value;
         return std::string("0");
-      }) program.add_argument("-r", "--restart_rate")
+      });
+  program.add_argument("-r", "--restart_rate")
       .help("restart rate")
       .default_value(std::string("0.001"));
 
