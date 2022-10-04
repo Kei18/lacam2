@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
       .help("0: makespan, 1: sum_of_loss")
       .default_value(std::string("0"))
       .action([](const std::string& value) {
-        static const std::vector<std::string> C = {"0", "1"};
+        static const std::vector<std::string> C = {"0", "1", "2"};
         if (std::find(C.begin(), C.end(), value) != C.end()) return value;
         return std::string("0");
       });
