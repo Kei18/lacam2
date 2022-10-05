@@ -157,6 +157,8 @@ void make_log(const Instance& ins, const Solution& solution,
   log << "makespan=" << get_makespan(solution) << "\n";
   log << "makespan_lb=" << get_makespan_lower_bound(ins, dist_table) << "\n";
   log << "sum_of_loss=" << get_sum_of_loss(solution) << "\n";
+  log << "sum_of_loss_lb=" << get_sum_of_costs_lower_bound(ins, dist_table)
+      << "\n";
   log << "comp_time=" << comp_time_ms << "\n";
   log << "seed=" << seed << "\n";
   if (log_short) return;
