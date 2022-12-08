@@ -132,7 +132,8 @@ static const std::regex r_map_name = std::regex(R"(.+/(.+))");
 
 void make_log(const Instance& ins, const Solution& solution,
               const std::string& output_name, const double comp_time_ms,
-              const std::string& map_name, const int seed, const bool log_short)
+              const std::string& map_name, const int seed,
+              const std::string& additional_info, const bool log_short)
 {
   // map name
   std::smatch results;
@@ -161,6 +162,7 @@ void make_log(const Instance& ins, const Solution& solution,
       << "\n";
   log << "comp_time=" << comp_time_ms << "\n";
   log << "seed=" << seed << "\n";
+  log << additional_info;
   if (log_short) return;
   log << "starts=";
   for (size_t i = 0; i < ins.N; ++i) {

@@ -47,13 +47,17 @@ struct Planner {
   Agents occupied_now;   // for quick collision checking
   Agents occupied_next;  // for quick collision checking
 
+  // for logging
+  std::vector<int> hist_cost;
+  std::vector<int> hist_time;
+
   Planner(const Instance* _ins, const Deadline* _deadline, std::mt19937* _MT,
           const int _verbose = 0,
           // other parameters
           const Objective _objective = OBJ_NONE,
           const float _restart_rate = 0.001);
   ~Planner();
-  Solution solve();
+  Solution solve(std::string& additional_info);
   void expand_lowlevel_tree(Node* S, Constraint* M);
   void rewrite(Node* S, Node* T);
   uint get_edge_cost(const Config& C1, const Config& C2);
@@ -63,6 +67,7 @@ struct Planner {
   bool funcPIBT(Agent* ai, Agent* aj = nullptr);
   bool is_swap_required(uint id_h, uint id_l, Vertex* v_now_h, Vertex* v_now_l);
   bool is_pullable(Vertex* v_now, Vertex* v_opposite);
+  void update_hist();
 
   template <typename... Body>
   void solver_info(const int level, Body&&... body)
@@ -76,7 +81,7 @@ struct Planner {
 };
 
 // main function
-Solution solve(const Instance& ins, const int verbose = 0,
-               const Deadline* deadline = nullptr, std::mt19937* MT = nullptr,
-               const Objective objective = OBJ_NONE,
+Solution solve(const Instance& ins, std::string& additional_info,
+               const int verbose = 0, const Deadline* deadline = nullptr,
+               std::mt19937* MT = nullptr, const Objective objective = OBJ_NONE,
                const float restart_rate = 0.001);

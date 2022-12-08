@@ -1,5 +1,7 @@
 #include "../include/planner.hpp"
 
+#include <string>
+
 Planner::Planner(const Instance* _ins, const Deadline* _deadline,
                  std::mt19937* _MT, const int _verbose,
                  const Objective _objective, const float _restart_rate)
@@ -33,7 +35,7 @@ Planner::~Planner()
   for (auto p : CLOSED) delete p.second;
 }
 
-Solution Planner::solve()
+Solution Planner::solve(std::string& additional_info)
 {
   solver_info(1, "start search");
 
@@ -68,6 +70,7 @@ Solution Planner::solve()
     if (S_goal == nullptr && is_same_config(S->C, ins->goals)) {
       S_goal = S;
       solver_info(1, "found solution, cost: ", S->g);
+      update_hist();
       if (objective == OBJ_NONE) break;
       continue;
     }
@@ -122,6 +125,19 @@ Solution Planner::solve()
     solver_info(1, "timeout");
   }
 
+  // logging
+  additional_info +=
+      "optimal=" + std::to_string(S_goal != nullptr && OPEN.empty()) + "\n";
+  additional_info += "objective=" + std::to_string(objective) + "\n";
+  additional_info += "loop_cnt=" + std::to_string(loop_cnt) + "\n";
+  additional_info += "num_node_gen=" + std::to_string(CLOSED.size()) + "\n";
+  update_hist();
+  additional_info += "hist_cost=";
+  for (auto c : hist_cost) additional_info += std::to_string(c) + ",";
+  additional_info += "\nhist_time";
+  for (auto c : hist_time) additional_info += std::to_string(c) + ",";
+  additional_info += "\n";
+
   return solution;
 }
 
@@ -149,6 +165,7 @@ void Planner::rewrite(Node* S, Node* T)
         W->f = W->g + W->h;
         W->parent = U;
         Q.push(W);
+        if (W == S_goal) update_hist();
         if (S_goal != nullptr && W->f < S_goal->f) OPEN.push(W);
       }
     }
@@ -197,6 +214,13 @@ void Planner::expand_lowlevel_tree(Node* S, Constraint* M)
   if (MT != nullptr) std::shuffle(C.begin(), C.end(), *MT);
   // insert
   for (auto v : C) S->search_tree.push(new Constraint(M, i, v));
+}
+
+void Planner::update_hist()
+{
+  if (S_goal == nullptr) return;
+  hist_cost.push_back(S_goal->g);
+  hist_time.push_back(elapsed_ms(deadline));
 }
 
 bool Planner::get_new_config(Node* S, Constraint* M)
@@ -402,10 +426,10 @@ std::ostream& operator<<(std::ostream& os, const Objective obj)
   return os;
 }
 
-Solution solve(const Instance& ins, const int verbose, const Deadline* deadline,
-               std::mt19937* MT, const Objective objective,
-               const float restart_rate)
+Solution solve(const Instance& ins, std::string& additional_info,
+               const int verbose, const Deadline* deadline, std::mt19937* MT,
+               const Objective objective, const float restart_rate)
 {
   auto planner = Planner(&ins, deadline, MT, verbose, objective, restart_rate);
-  return planner.solve();
+  return planner.solve(additional_info);
 }
