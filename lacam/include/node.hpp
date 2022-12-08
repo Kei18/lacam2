@@ -17,7 +17,7 @@ struct Node {
   const uint h;
   uint f;
   // low-level search
-  std::vector<std::tuple<int, int, float>> priorities;
+  std::vector<float> priorities;
   std::vector<uint> order;
   std::queue<Constraint*> search_tree;
 

@@ -28,15 +28,15 @@ Node::Node(const Config& _C, DistTable& D, Node* _parent, const uint _g,
   // set priorities
   if (parent == nullptr) {
     // initialize
-    for (uint i = 0; i < N; ++i)
-      priorities[i] = {0, 0, (float)D.get(i, C[i]) / N};
+    for (uint i = 0; i < N; ++i) priorities[i] = (float)D.get(i, C[i]) / N;
   } else {
     // dynamic priorities, akin to PIBT
-    for (uint i = 0; i < N; ++i) {
-      priorities[i] = {
-          (D.get(i, C[i]) != 0) ? std::get<0>(parent->priorities[i]) + 1 : 0,
-          (D.get(i, C[i]) == 0) ? std::get<1>(parent->priorities[i]) - 1 : 0,
-          std::get<2>(parent->priorities[i])};
+    for (size_t i = 0; i < N; ++i) {
+      if (D.get(i, C[i]) != 0) {
+        priorities[i] = parent->priorities[i] + 1;
+      } else {
+        priorities[i] = parent->priorities[i] - (int)parent->priorities[i];
+      }
     }
   }
 
