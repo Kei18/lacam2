@@ -285,40 +285,6 @@ bool Planner::funcPIBT(Agent* ai, Agent* aj)
                      D.get(i, u) + tie_breakers[u->id];
             });
 
-  // for swap situation
-  Agent* swap_agent = nullptr;
-  {
-    auto al = occupied_now[C_next[i][0]->id];
-    if (al != nullptr && al != ai && al->v_next == nullptr &&
-        is_swap_required(ai->id, al->id, ai->v_now, al->v_now) &&
-        is_pullable(ai->v_now, al->v_now)) {
-      swap_agent = al;
-      std::reverse(C_next[i].begin(), C_next[i].begin() + K + 1);
-    }
-  }
-  auto swap_operation = [&](const uint k) {
-    if (k == 0 && swap_agent != nullptr && swap_agent->v_next == nullptr &&
-        occupied_next[ai->v_now->id] == nullptr) {
-      // pull swap_agent
-      swap_agent->v_next = ai->v_now;
-      occupied_next[swap_agent->v_next->id] = swap_agent;
-    }
-  };
-  // for clear operation
-  if (swap_agent == nullptr) {
-    for (auto u : ai->v_now->neighbor) {
-      auto ah = occupied_now[u->id];
-      if (ah == nullptr || C_next[i][0] == ai->v_now ||
-          C_next[i][0] == ah->v_now)
-        continue;
-      if (is_swap_required(ah->id, ai->id, ai->v_now, C_next[i][0]) &&
-          is_pullable(ai->v_now, C_next[i][0])) {
-        std::reverse(C_next[i].begin(), C_next[i].begin() + K + 1);
-        break;
-      }
-    }
-  }
-
   // main operation
   for (size_t k = 0; k < K + 1; ++k) {
     auto u = C_next[i][k];
@@ -339,7 +305,6 @@ bool Planner::funcPIBT(Agent* ai, Agent* aj)
 
     // empty or stay
     if (ak == nullptr || u == ai->v_now) {
-      swap_operation(k);
       return true;
     }
 
@@ -347,7 +312,6 @@ bool Planner::funcPIBT(Agent* ai, Agent* aj)
     if (ak->v_next == nullptr && !funcPIBT(ak, ai)) continue;
 
     // success to plan next one step
-    swap_operation(k);
     return true;
   }
 
