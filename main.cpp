@@ -64,9 +64,10 @@ int main(int argc, char* argv[])
   if (!ins.is_valid(1)) return 1;
 
   // solve
+  auto additional_info = std::string("");
   const auto deadline = Deadline(time_limit_sec * 1000);
-  const auto solution =
-      solve(ins, verbose - 1, &deadline, &MT, objective, restart_rate);
+  const auto solution = solve(ins, additional_info, verbose - 1, &deadline, &MT,
+                              objective, restart_rate);
   const auto comp_time_ms = deadline.elapsed_ms();
 
   // failure
@@ -79,6 +80,7 @@ int main(int argc, char* argv[])
 
   // post processing
   print_stats(verbose, ins, solution, comp_time_ms);
-  make_log(ins, solution, output_name, comp_time_ms, map_name, seed, log_short);
+  make_log(ins, solution, output_name, comp_time_ms, map_name, seed,
+           additional_info, log_short);
   return 0;
 }
