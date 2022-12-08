@@ -71,8 +71,7 @@ Solution Planner::solve(std::string& additional_info)
       S_goal = S;
       solver_info(1, "found solution, cost: ", S->g);
       update_hist();
-      if (objective == OBJ_NONE) break;
-      continue;
+      break;
     }
 
     // create successors at the low-level search
@@ -91,8 +90,6 @@ Solution Planner::solve(std::string& additional_info)
     // check explored list
     const auto iter = CLOSED.find(C_new);
     if (iter != CLOSED.end()) {
-      // case found
-      rewrite(S, iter->second);
       // re-insert or random-restart
       auto T = get_random_float(MT) >= RESTART_RATE ? iter->second : S_init;
       if (S_goal == nullptr || T->f < S_goal->f) OPEN.push(T);
