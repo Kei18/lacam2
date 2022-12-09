@@ -10,6 +10,12 @@ cd lacam2
 cmake -B build && make -C build
 ```
 
+for M1
+
+```sh
+cmake -B build -DCPU=M1
+```
+
 ## Usage
 
 ```sh
