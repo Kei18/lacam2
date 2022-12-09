@@ -61,10 +61,10 @@ Solution Planner::solve(std::string& additional_info)
     }
 
     // check lower bounds
-    if (S_goal != nullptr && S->f >= S_goal->f) {
-      OPEN.pop();
-      continue;
-    }
+    // if (S_goal != nullptr && S->f >= S_goal->f) {
+    //   OPEN.pop();
+    //   continue;
+    // }
 
     // check goal condition
     if (S_goal == nullptr && is_same_config(S->C, ins->goals)) {
@@ -166,7 +166,7 @@ void Planner::rewrite(Node* S, Node* T)
         W->parent = U;
         Q.push(W);
         if (W == S_goal) update_hist();
-        if (S_goal != nullptr && W->f < S_goal->f) OPEN.push(W);
+        // if (S_goal != nullptr && W->f < S_goal->f) OPEN.push(W);
       }
     }
   }
