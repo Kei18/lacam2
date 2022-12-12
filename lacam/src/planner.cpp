@@ -95,13 +95,15 @@ Solution Planner::solve(std::string& additional_info)
       rewrite(S, iter->second);
       // re-insert or random-restart
       auto T = get_random_float(MT) >= RESTART_RATE ? iter->second : S_init;
-      if (S_goal == nullptr || T->f < S_goal->f) OPEN.push(T);
+      // if (S_goal == nullptr || T->f < S_goal->f) OPEN.push(T);
+      OPEN.push(T);
     } else {
       // insert new search node
       const auto S_new = new Node(
           C_new, D, S, S->g + get_edge_cost(S->C, C_new), get_h_value(C_new));
       CLOSED[S_new->C] = S_new;
-      if (S_goal == nullptr || S_new->f < S_goal->f) OPEN.push(S_new);
+      // if (S_goal == nullptr || S_new->f < S_goal->f) OPEN.push(S_new);
+      OPEN.push(S_new);
     }
   }
 
@@ -134,7 +136,7 @@ Solution Planner::solve(std::string& additional_info)
   update_hist();
   additional_info += "hist_cost=";
   for (auto c : hist_cost) additional_info += std::to_string(c) + ",";
-  additional_info += "\nhist_time";
+  additional_info += "\nhist_time=";
   for (auto c : hist_time) additional_info += std::to_string(c) + ",";
   additional_info += "\n";
 
