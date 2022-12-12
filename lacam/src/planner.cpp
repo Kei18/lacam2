@@ -134,7 +134,7 @@ Solution Planner::solve(std::string& additional_info)
   update_hist();
   additional_info += "hist_cost=";
   for (auto c : hist_cost) additional_info += std::to_string(c) + ",";
-  additional_info += "\nhist_time";
+  additional_info += "\nhist_time=";
   for (auto c : hist_time) additional_info += std::to_string(c) + ",";
   additional_info += "\n";
 
