@@ -1,8 +1,11 @@
+/*
+ * low-level search node
+ */
+
 #pragma once
 #include "graph.hpp"
 #include "utils.hpp"
 
-// low-level search node
 struct Constraint {
   std::vector<uint> who;
   Vertices where;

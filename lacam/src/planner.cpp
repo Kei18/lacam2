@@ -1,7 +1,5 @@
 #include "../include/planner.hpp"
 
-#include <string>
-
 Planner::Planner(const Instance* _ins, const Deadline* _deadline,
                  std::mt19937* _MT, const int _verbose,
                  const Objective _objective, const float _restart_rate)

@@ -1,13 +1,16 @@
+/*
+ * high-level search node
+ */
+
 #pragma once
 
 #include "constraint.hpp"
 #include "dist_table.hpp"
 #include "utils.hpp"
 
-// high-level search node
 struct Node {
-  static uint NODE_CNT;
-  const uint id;
+  static uint NODE_CNT;  // for id
+  const uint id;  // used in neighbor
   const Config C;
   // tree
   Node* parent;
@@ -16,7 +19,7 @@ struct Node {
   uint g;
   const uint h;
   uint f;
-  // low-level search
+  // for low-level search
   std::vector<float> priorities;
   std::vector<uint> order;
   std::queue<Constraint*> search_tree;

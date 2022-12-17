@@ -1,3 +1,7 @@
+/*
+ * lacam-star
+ */
+
 #pragma once
 
 #include "constraint.hpp"
@@ -65,10 +69,13 @@ struct Planner {
   uint get_h_value(const Config& C);
   bool get_new_config(Node* S, Constraint* M);
   bool funcPIBT(Agent* ai, Agent* aj = nullptr);
+
+  // swap operation
   bool is_swap_required(uint id_h, uint id_l, Vertex* v_now_h, Vertex* v_now_l);
   bool is_pullable(Vertex* v_now, Vertex* v_opposite);
-  void update_hist();
 
+  // utilities
+  void update_hist();
   template <typename... Body>
   void solver_info(const int level, Body&&... body)
   {
