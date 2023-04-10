@@ -1,67 +1,85 @@
 title: |
-  project page generator (title)
+  Improving LaCAM for Scalable Eventually Optimal Multi-Agent Pathfinding
 
 # meta-tag
 description: |-
-  demo site
+  LaCAM* algorithm for multi-agent path finding
 site_name: research projects | Keisuke Okumura
-site_url: https://kei18.github.io/project-page-generator/
+site_url: https://kei18.github.io/lacam2/
 thumbnail: thumbnail
 twitter: _kei18
 
 authors:
   - name: Keisuke Okumura
     url: https://kei18.github.io/
-    affiliation: Tokyo Institute of Technology
-  - name: Alice
-    url: https://en.wikipedia.org/wiki/Alice
-    affiliation: Alice's Adventures in Wonderland
-  - name: Satoshi Nakamoto
+    affiliation: |
+      National Institute of Advanced Technology and Science / University of Cambridge
 
 topLinks:
-  - name: paper-link (e.g., AIJ-21)
-    url: https://doi.org/10.1016/j.artint.2022.103752
+  - name: arXiv
+    # url: https://doi.org/10.1016/j.artint.2022.103752
 
-headerImage: demo
+headerImage: concept
+headerDescription: |
+  the original image by <a href="https://pixabay.com/users/openclipart-vectors-30363/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=2027200">OpenClipart-Vectors</a> from <a href="https://pixabay.com//?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=2027200">Pixabay</a>
 
 subLinks:
   - name: code
-    url: https://github.com/Kei18/project-page-generator
+    url: https://github.com/Kei18/lacam2
 
 otherLinks:
-  - name: |
-      example-1: LaCAM
+  - name: LaCAM (AAAI-23)
     url: https://kei18.github.io/lacam/
-  - name: |
-      example-2: MAPPCF
-    url: https://kei18.github.io/mappcf/
+  - name: PIBT (AIJ-22)
+    url: https://kei18.github.io/pibt2/
+  - name: mapf-visualizer
+    url: https://github.com/Kei18/mapf-visualizer
+
 
 abstract: |
-  <p>Write your abstract here</p>
-  <p><span class="text-danger">Lorem ipsum</span> dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+  <p>
+  This study extends the recently-developed LaCAM algorithm for multi-agent pathfinding (MAPF).
+  LaCAM is a sub-optimal search-based algorithm that uses lazy successor generation, dramatically reducing the planning effort.
+  We introduce two enhancements.
+  First, we present its <span class="text-danger">anytime version called LaCAM*</span> which eventually converges to optima, provided solution costs are accumulated transition costs.
+  Second, we <span class="text-danger">improve the successor generation</span> to quickly obtain initial solutions.
+  Exhaustive experiments support their utility.
+  </p>
 
-news:
-  - body: |
-      The paper has been accepted to Artificial Intelligence (AIJ)!
-    url: https://www.journals.elsevier.com/artificial-intelligence
-    date: Jul. 2022
+performance:
+  image: performance
+  description: |
+    Figure 1: Performance on the MAPF benchmark.
+    Upper: The number of solved instances among 13,900 instances comprising 33 four-connected grid maps, retrieved from the MAPF benchmark.
+    The size of agents varies up to 1,000.
+    '-f,' '-m,' and '-l' respectively mean that an algorithm tries to minimize flowtime, makespan, or sum-of-loss.
+    LaCAM* uses data of initial solutions.
+    Lower: Representative or state-of-the-art MAPF algorithms.
+    ''solution cmp.'' means that an algorithm ensures to find solutions for solvable instances but it never identifies unsolvable ones.
+    ''bnd. sub-opt.'' denotes a bounded sub-optimal algorithm.
+    Their sub-optimality was set to five.
 
-video: https://player.vimeo.com/video/645887407
+# news:
+#   - body: |
+#       The paper has been accepted to IJCAI-23!
+#     url:
+#     date: Apr. 2022
 
-slides: https://speakerdeck.com/player/c720eb1fa04244c79127fe6ba0c03030
+# video:
+
+# slides:
 
 citation: |-
-  @article{okumura2022priority,
-  title = {Priority Inheritance with Backtracking for Iterative Multi-agent Path Finding},
-  journal = {Artificial Intelligence},
-  pages = {103752},
-  year = {2022},
-  issn = {0004-3702},
-  doi = {https://doi.org/10.1016/j.artint.2022.103752},
-  author = {Keisuke Okumura and Manao Machida and Xavier Défago and Yasumasa Tamura}
+  (in press)
+
+  @inproceedings{okumura2023lacam2,
+    title={Improving LaCAM for Scalable Eventually Optimal Multi-Agent Pathfinding},
+    booktitle={Proceedings of the Thirty-First International Joint Conference on Artificial Intelligence (IJCAI)},
+    year={2023},
+    author={Okumura, Keisuke}
   }
 
 contact: |-
-  okumura.k [at] coord.c.titech.ac.jp
+  okumura.k [at] aist.go.jp / keisuke.oku18 [at] gmail.com
 
 copyright: Keisuke Okumura

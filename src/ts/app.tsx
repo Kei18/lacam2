@@ -117,6 +117,14 @@ const App: React.SFC<{}> = () => {
               ) : (
                 ""
               )}
+                          {data.headerDescription ? (
+                              <div
+                                  className="text-secondary text-center"
+                                  dangerouslySetInnerHTML={{ __html: data.headerDescription }}
+                              ></div>
+                          ) : (
+                              ""
+                          )}
             </div>
           ) : (
             ""
@@ -169,6 +177,29 @@ const App: React.SFC<{}> = () => {
           ) : (
             ""
           )}
+
+      {data.performance ? (
+          <div className="mx-auto mt-5">
+              <p className="h5">Performance</p>
+              {images_png[data.performance.image] ? (
+                  <img src={images_png[data.performance.image]} className="img-fluid" />
+              ) : (
+                  ""
+              )}
+          {data.headerDescription ? (
+              <small>
+              <div
+              className="mt-3 text-secondary"
+              dangerouslySetInnerHTML={{ __html: data.performance.description }}
+                  ></div></small>
+          ) : (
+              ""
+          )}
+          </div>
+      ) : (
+          ""
+      )}
+
 
           {data.video ? (
             <div className="mx-auto mt-5">
