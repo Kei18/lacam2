@@ -12,20 +12,20 @@ twitter: _kei18
 authors:
   - name: Keisuke Okumura
     url: https://kei18.github.io/
-    affiliation: |
-      National Institute of Advanced Technology and Science / University of Cambridge
+    # affiliation: |
+    #   National Institute of Advanced Technology and Science / University of Cambridge
 
 topLinks:
-  - name: arXiv
+  # - name: arXiv
     # url: https://doi.org/10.1016/j.artint.2022.103752
 
 headerImage: concept
 headerDescription: |
   the original image by <a href="https://pixabay.com/users/openclipart-vectors-30363/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=2027200">OpenClipart-Vectors</a> from <a href="https://pixabay.com//?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=2027200">Pixabay</a>
 
-subLinks:
-  - name: code
-    url: https://github.com/Kei18/lacam2
+# subLinks:
+#   - name: code
+#     url: https://github.com/Kei18/lacam2
 
 otherLinks:
   - name: LaCAM (AAAI-23)
@@ -59,11 +59,11 @@ performance:
     ''bnd. sub-opt.'' denotes a bounded sub-optimal algorithm.
     Their sub-optimality was set to five.
 
-# news:
-#   - body: |
-#       The paper has been accepted to IJCAI-23!
-#     url:
-#     date: Apr. 2022
+news:
+  - body: |
+      The paper has been accepted to IJCAI-23!
+    url:
+    date: Apr. 2023
 
 # video:
 
