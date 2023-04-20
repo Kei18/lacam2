@@ -15,10 +15,10 @@ using Vertices = std::vector<Vertex*>;
 using Config = std::vector<Vertex*>;  // a set of locations for all agents
 
 struct Graph {
-  Vertices V;   // without nullptr
-  Vertices U;   // with nullptr
-  uint width;   // grid width
-  uint height;  // grid height
+  Vertices V;                          // without nullptr
+  Vertices U;                          // with nullptr
+  uint width;                          // grid width
+  uint height;                         // grid height
   Graph();
   Graph(const std::string& filename);  // taking map filename
   ~Graph();

@@ -10,7 +10,7 @@
 
 struct Node {
   static uint NODE_CNT;  // for id
-  const uint id;  // used in neighbor
+  const uint id;         // used in neighbor
   const Config C;
   // tree
   Node* parent;

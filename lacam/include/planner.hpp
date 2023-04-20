@@ -48,8 +48,8 @@ struct Planner {
   Candidates C_next;                // used in PIBT
   std::vector<float> tie_breakers;  // random values, used in PIBT
   Agents A;
-  Agents occupied_now;   // for quick collision checking
-  Agents occupied_next;  // for quick collision checking
+  Agents occupied_now;              // for quick collision checking
+  Agents occupied_next;             // for quick collision checking
 
   // for logging
   std::vector<int> hist_cost;

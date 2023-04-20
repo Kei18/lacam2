@@ -144,7 +144,7 @@ void Planner::rewrite(Node* S, Node* T)
   S->neighbor[T->id] = T;
   T->neighbor[S->id] = S;  // since the graph is undirected
   auto c = S->g + get_edge_cost(S, T);
-  if (c >= T->g) return;  // no need to update costs
+  if (c >= T->g) return;   // no need to update costs
 
   // update neighbors
   // in this implementation, BFS is sufficient rather than Dijkstra
