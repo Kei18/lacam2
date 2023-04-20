@@ -12,8 +12,8 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
       N(ins->N),
       V_size(ins->G.size()),
       D(DistTable(ins)),
-      OPEN(std::stack<Node*>()),
-      CLOSED(std::unordered_map<Config, Node*, ConfigHasher>()),
+      OPEN(std::stack<HNode*>()),
+      CLOSED(std::unordered_map<Config, HNode*, ConfigHasher>()),
       S_goal(nullptr),
       loop_cnt(0),
       C_next(Candidates(N, std::array<Vertex*, 5>())),
@@ -38,7 +38,7 @@ Solution Planner::solve(std::string& additional_info)
   solver_info(1, "start search");
 
   // insert initial node
-  auto S_init = new Node(ins->starts, D, nullptr, 0, get_h_value(ins->starts));
+  auto S_init = new HNode(ins->starts, D, nullptr, 0, get_h_value(ins->starts));
   OPEN.push(S_init);
   CLOSED[S_init->C] = S_init;
 
@@ -92,11 +92,13 @@ Solution Planner::solve(std::string& additional_info)
       // case found
       rewrite(S, iter->second);
       // re-insert or random-restart
-      auto T = get_random_float(MT) >= RESTART_RATE ? iter->second : S_init;
+      auto T = (MT != nullptr && get_random_float(MT) >= RESTART_RATE)
+                   ? iter->second
+                   : S_init;
       if (S_goal == nullptr || T->f < S_goal->f) OPEN.push(T);
     } else {
       // insert new search node
-      const auto S_new = new Node(
+      const auto S_new = new HNode(
           C_new, D, S, S->g + get_edge_cost(S->C, C_new), get_h_value(C_new));
       CLOSED[S_new->C] = S_new;
       if (S_goal == nullptr || S_new->f < S_goal->f) OPEN.push(S_new);
@@ -139,7 +141,7 @@ Solution Planner::solve(std::string& additional_info)
   return solution;
 }
 
-void Planner::rewrite(Node* S, Node* T)
+void Planner::rewrite(HNode* S, HNode* T)
 {
   S->neighbor[T->id] = T;
   T->neighbor[S->id] = S;  // since the graph is undirected
@@ -148,7 +150,7 @@ void Planner::rewrite(Node* S, Node* T)
 
   // update neighbors
   // in this implementation, BFS is sufficient rather than Dijkstra
-  std::queue<Node*> Q;
+  std::queue<HNode*> Q;
   Q.push(S);
   while (!Q.empty()) {
     auto U = Q.front();
@@ -186,7 +188,7 @@ uint Planner::get_edge_cost(const Config& C1, const Config& C2)
   return 1;
 }
 
-uint Planner::get_edge_cost(Node* S, Node* T)
+uint Planner::get_edge_cost(HNode* S, HNode* T)
 {
   return get_edge_cost(S->C, T->C);
 }
@@ -202,7 +204,7 @@ uint Planner::get_h_value(const Config& C)
   return cost;
 }
 
-void Planner::expand_lowlevel_tree(Node* S, Constraint* M)
+void Planner::expand_lowlevel_tree(HNode* S, LNode* M)
 {
   if (M->depth >= N) return;
   const auto i = S->order[M->depth];
@@ -211,7 +213,7 @@ void Planner::expand_lowlevel_tree(Node* S, Constraint* M)
   // randomize
   if (MT != nullptr) std::shuffle(C.begin(), C.end(), *MT);
   // insert
-  for (auto v : C) S->search_tree.push(new Constraint(M, i, v));
+  for (auto v : C) S->search_tree.push(new LNode(M, i, v));
 }
 
 void Planner::update_hist()
@@ -221,7 +223,7 @@ void Planner::update_hist()
   hist_time.push_back(elapsed_ms(deadline));
 }
 
-bool Planner::get_new_config(Node* S, Constraint* M)
+bool Planner::get_new_config(HNode* S, LNode* M)
 {
   // setup cache
   for (auto a : A) {

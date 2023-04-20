@@ -6,11 +6,12 @@
 #include "graph.hpp"
 #include "utils.hpp"
 
-struct Constraint {
+// low-level node
+struct LNode {
   std::vector<uint> who;
   Vertices where;
   const uint depth;
-  Constraint();
-  Constraint(Constraint* parent, uint i, Vertex* v);  // who and where
-  ~Constraint();
+  LNode();
+  LNode(LNode* parent, uint i, Vertex* v);  // who and where
+  ~LNode();
 };

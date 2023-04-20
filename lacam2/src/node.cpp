@@ -1,22 +1,22 @@
 #include "../include/node.hpp"
 
-uint Node::NODE_CNT = 0;
+uint HNode::HNODE_CNT = 0;
 
 // for high-level
-Node::Node(const Config& _C, DistTable& D, Node* _parent, const uint _g,
-           const uint _h)
-    : id(++NODE_CNT),
+HNode::HNode(const Config& _C, DistTable& D, HNode* _parent, const uint _g,
+             const uint _h)
+    : id(++HNODE_CNT),
       C(_C),
       parent(_parent),
-      neighbor(std::unordered_map<uint, Node*>()),
+      neighbor(std::unordered_map<uint, HNode*>()),
       g(_g),
       h(_h),
       f(g + h),
       priorities(C.size()),
       order(C.size(), 0),
-      search_tree(std::queue<Constraint*>())
+      search_tree(std::queue<LNode*>())
 {
-  search_tree.push(new Constraint());
+  search_tree.push(new LNode());
   const auto N = C.size();
 
   // update neighbor
@@ -46,7 +46,7 @@ Node::Node(const Config& _C, DistTable& D, Node* _parent, const uint _g,
             [&](uint i, uint j) { return priorities[i] > priorities[j]; });
 }
 
-Node::~Node()
+HNode::~HNode()
 {
   while (!search_tree.empty()) {
     delete search_tree.front();

@@ -41,9 +41,9 @@ struct Planner {
   const uint N;       // number of agents
   const uint V_size;  // number o vertices
   DistTable D;
-  std::stack<Node*> OPEN;
-  std::unordered_map<Config, Node*, ConfigHasher> CLOSED;
-  Node* S_goal;                     // auxiliary, goal node
+  std::stack<HNode*> OPEN;
+  std::unordered_map<Config, HNode*, ConfigHasher> CLOSED;
+  HNode* S_goal;                    // auxiliary, goal node
   uint loop_cnt;                    // auxiliary
   Candidates C_next;                // used in PIBT
   std::vector<float> tie_breakers;  // random values, used in PIBT
@@ -62,12 +62,12 @@ struct Planner {
           const float _restart_rate = 0.001);
   ~Planner();
   Solution solve(std::string& additional_info);
-  void expand_lowlevel_tree(Node* S, Constraint* M);
-  void rewrite(Node* S, Node* T);
+  void expand_lowlevel_tree(HNode* S, LNode* M);
+  void rewrite(HNode* S, HNode* T);
   uint get_edge_cost(const Config& C1, const Config& C2);
-  uint get_edge_cost(Node* S, Node* T);
+  uint get_edge_cost(HNode* S, HNode* T);
   uint get_h_value(const Config& C);
-  bool get_new_config(Node* S, Constraint* M);
+  bool get_new_config(HNode* S, LNode* M);
   bool funcPIBT(Agent* ai, Agent* aj = nullptr);
 
   // swap operation
@@ -82,7 +82,7 @@ struct Planner {
     if (verbose < level) return;
     std::cout << "elapsed:" << std::setw(6) << elapsed_ms(deadline) << "ms"
               << "  loop_cnt:" << std::setw(8) << loop_cnt
-              << "  node_cnt:" << std::setw(8) << Node::NODE_CNT << "\t";
+              << "  node_cnt:" << std::setw(8) << HNode::HNODE_CNT << "\t";
     info(level, verbose, (body)...);
   }
 };

@@ -8,13 +8,14 @@
 #include "dist_table.hpp"
 #include "utils.hpp"
 
-struct Node {
-  static uint NODE_CNT;  // for id
-  const uint id;         // used in neighbor
+// high-level node
+struct HNode {
+  static uint HNODE_CNT;  // for id
+  const uint id;          // used in neighbor
   const Config C;
   // tree
-  Node* parent;
-  std::unordered_map<uint, Node*> neighbor;
+  HNode* parent;
+  std::unordered_map<uint, HNode*> neighbor;
   // costs
   uint g;
   const uint h;
@@ -22,10 +23,10 @@ struct Node {
   // for low-level search
   std::vector<float> priorities;
   std::vector<uint> order;
-  std::queue<Constraint*> search_tree;
+  std::queue<LNode*> search_tree;
 
-  Node(const Config& _C, DistTable& D, Node* _parent, const uint _g,
-       const uint _h);
-  ~Node();
+  HNode(const Config& _C, DistTable& D, HNode* _parent, const uint _g,
+        const uint _h);
+  ~HNode();
 };
-using Nodes = std::vector<Node*>;
+using HNodes = std::vector<HNode*>;
