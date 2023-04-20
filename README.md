@@ -3,7 +3,11 @@ lacam2
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 [![CI](https://github.com/Kei18/lacam2/actions/workflows/ci.yml/badge.svg)](https://github.com/Kei18/lacam2/actions/workflows/ci.yml)
 
-The code repository of the paper "Improving LaCAM for Scalable Eventually Optimal Multi-Agent Pathfinding" (IJCAI-23).
+Do you want the power?
+LaCAM* could be the answer.
+
+- The code repository of the paper ["Improving LaCAM for Scalable Eventually Optimal Multi-Agent Pathfinding"](https://kei18.github.io/lacam2/) (IJCAI-23).
+- This repo is extended from [the LaCAM repo presented at AAAI-23](https://kei18.github.io/lacam/).
 
 ## Building
 
@@ -21,23 +25,22 @@ Then, build the project.
 cmake -B build && make -C build
 ```
 
-### for M1 cpu
-```sh
-cmake -B build -DCPU=M1 && make -C build
-```
-
-### Docker
-
 You can also use the [docker](https://www.docker.com/) environment (based on Ubuntu18.04) instead of the native one.
-
-```sh
-# ~10 min, mostly for CMake build
-docker compose up -d
-docker compose exec dev bash
-> cmake -B build && make -C build
-```
+An example setup is available in `assets/`.
 
 ## Usage
+
+no optimization (random starts/goals):
+
+```sh
+> build/main -v 1 -m assets/random-32-32-20.map -N 400
+solved: 31ms    makespan: 112 (lb=58, ub=1.94)  sum_of_costs: 31373 (lb=9217, ub=3.41)  sum_of_loss: 26001 (lb=9217, ub=2.83)
+
+# with the MAPF visualizer mentioned below
+> mapf-visualizer map/random-32-32-20.map build/result.txt
+```
+
+![](assets/demo-random-32-32-20_400agents.gif)
 
 makespan optimization:
 
@@ -63,6 +66,8 @@ build/main --help
 This repository is compatible with [@Kei18/mapf-visualizer](https://github.com/kei18/mapf-visualizer).
 
 ## Experiments
+
+[![v0.1](https://img.shields.io/badge/tag-v0.1-blue.svg?style=flat)](https://github.com/Kei18/lacam2/releases/tag/v0.1)
 
 The experimental script is written in Julia ≥1.7.
 Setup may require around 10 minutes.
