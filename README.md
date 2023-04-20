@@ -3,7 +3,7 @@ lacam2
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 [![CI](https://github.com/Kei18/lacam2/actions/workflows/ci.yml/badge.svg)](https://github.com/Kei18/lacam2/actions/workflows/ci.yml)
 
-The code repository of the paper "Improving LaCAM for Scalable Eventually Optimal Multi-Agent Pathfinding."
+The code repository of the paper "Improving LaCAM for Scalable Eventually Optimal Multi-Agent Pathfinding" (IJCAI-23).
 
 ## Building
 
@@ -93,7 +93,3 @@ git config core.hooksPath .githooks && chmod a+x .githooks/pre-commit
 ## Licence
 
 This software is released under the MIT License, see [LICENSE.txt](LICENCE.txt).
-
-## Author
-
-[Keisuke Okumura](https://kei18.github.io) is a Ph.D. student at Tokyo Institute of Technology, interested in controlling multiple moving agents.
