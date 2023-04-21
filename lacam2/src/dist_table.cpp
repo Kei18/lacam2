@@ -30,6 +30,9 @@ uint DistTable::get(uint i, uint v_id)
    * BFS with lazy evaluation
    * c.f., Reverse Resumable A*
    * https://www.aaai.org/Papers/AIIDE/2005/AIIDE05-020.pdf
+   *
+   * sidenote:
+   * tested RRA* but lazy BFS was much better in performance
    */
 
   while (!OPEN[i].empty()) {

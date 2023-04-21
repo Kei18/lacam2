@@ -93,19 +93,19 @@ Solution Planner::solve(std::string& additional_info)
   // setup agents
   for (auto i = 0; i < N; ++i) A[i] = new Agent(i);
 
+  // setup search
   auto OPEN = std::stack<HNode*>();
   auto EXPLORED = std::unordered_map<Config, HNode*, ConfigHasher>();
-
   // insert initial node, 'H': high-level node
   auto H_init = new HNode(ins->starts, D, nullptr, 0, get_h_value(ins->starts));
   OPEN.push(H_init);
   EXPLORED[H_init->C] = H_init;
 
-  // BFS
   std::vector<Config> solution;
-  auto C_new = Config(N, nullptr);  // new configuration
-  HNode* H_goal = nullptr;          // goal node
+  auto C_new = Config(N, nullptr);  // for new configuration
+  HNode* H_goal = nullptr;          // to store goal node
 
+  // DFS
   while (!OPEN.empty() && !is_expired(deadline)) {
     loop_cnt += 1;
 
@@ -174,6 +174,7 @@ Solution Planner::solve(std::string& additional_info)
     std::reverse(solution.begin(), solution.end());
   }
 
+  // print result
   if (H_goal != nullptr && OPEN.empty()) {
     solver_info(1, "solved optimally, objective: ", objective);
   } else if (H_goal != nullptr) {

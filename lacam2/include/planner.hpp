@@ -33,7 +33,7 @@ struct LNode {
 
 // high-level node
 struct HNode {
-  static uint HNODE_CNT;  // for id
+  static uint HNODE_CNT;  // count #(high-level node)
   const Config C;
 
   // tree
@@ -41,9 +41,9 @@ struct HNode {
   std::set<HNode*> neighbor;
 
   // costs
-  uint g;
-  const uint h;
-  uint f;
+  uint g;        // g-value (might be updated)
+  const uint h;  // h-value
+  uint f;        // g + h (might be updated)
 
   // for low-level search
   std::vector<float> priorities;
@@ -71,8 +71,9 @@ struct Planner {
   const uint V_size;  // number o vertices
   DistTable D;
   uint loop_cnt;      // auxiliary
-  // next location candidates, for saving memory allocation
-  std::vector<std::array<Vertex*, 5> > C_next;  // used in PIBT
+
+  // used in PIBT
+  std::vector<std::array<Vertex*, 5> > C_next;  // next locations, used in PIBT
   std::vector<float> tie_breakers;              // random values, used in PIBT
   Agents A;
   Agents occupied_now;                          // for quick collision checking
@@ -91,7 +92,7 @@ struct Planner {
   uint get_edge_cost(const Config& C1, const Config& C2);
   uint get_edge_cost(HNode* H_from, HNode* H_to);
   uint get_h_value(const Config& C);
-  bool get_new_config(HNode* S, LNode* M);
+  bool get_new_config(HNode* H, LNode* L);
   bool funcPIBT(Agent* ai);
 
   // swap operation
