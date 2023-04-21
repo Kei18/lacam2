@@ -4,12 +4,14 @@
 
 #pragma once
 
-#include "constraint.hpp"
 #include "dist_table.hpp"
 #include "graph.hpp"
 #include "instance.hpp"
-#include "node.hpp"
 #include "utils.hpp"
+
+// objective function
+enum Objective { OBJ_NONE, OBJ_MAKESPAN, OBJ_SUM_OF_LOSS };
+std::ostream& operator<<(std::ostream& os, const Objective objective);
 
 // PIBT agent
 struct Agent {
@@ -20,9 +22,39 @@ struct Agent {
 };
 using Agents = std::vector<Agent*>;
 
-// objective function
-enum Objective { OBJ_NONE, OBJ_MAKESPAN, OBJ_SUM_OF_LOSS };
-std::ostream& operator<<(std::ostream& os, const Objective objective);
+// low-level node
+struct LNode {
+  std::vector<uint> who;
+  Vertices where;
+  const uint depth;
+  LNode(LNode* parent = nullptr, uint i = 0,
+        Vertex* v = nullptr);  // who and where
+};
+
+// high-level node
+struct HNode {
+  static uint HNODE_CNT;  // for id
+  const Config C;
+
+  // tree
+  HNode* parent;
+  std::set<HNode*> neighbor;
+
+  // costs
+  uint g;
+  const uint h;
+  uint f;
+
+  // for low-level search
+  std::vector<float> priorities;
+  std::vector<uint> order;
+  std::queue<LNode*> search_tree;
+
+  HNode(const Config& _C, DistTable& D, HNode* _parent, const uint _g,
+        const uint _h);
+  ~HNode();
+};
+using HNodes = std::vector<HNode*>;
 
 struct Planner {
   const Instance* ins;
@@ -79,9 +111,3 @@ struct Planner {
     info(level, verbose, (body)...);
   }
 };
-
-// main function
-Solution solve(const Instance& ins, std::string& additional_info,
-               const int verbose = 0, const Deadline* deadline = nullptr,
-               std::mt19937* MT = nullptr, const Objective objective = OBJ_NONE,
-               const float restart_rate = 0.001);

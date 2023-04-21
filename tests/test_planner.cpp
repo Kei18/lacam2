@@ -1,4 +1,4 @@
-#include <lacam.hpp>
+#include <lacam2.hpp>
 
 #include "gtest/gtest.h"
 

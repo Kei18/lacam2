@@ -1,5 +1,68 @@
 #include "../include/planner.hpp"
 
+LNode::LNode(LNode* parent, uint i, Vertex* v)
+    : who(), where(), depth(parent == nullptr ? 0 : parent->depth + 1)
+{
+  if (parent != nullptr) {
+    who = parent->who;
+    who.push_back(i);
+    where = parent->where;
+    where.push_back(v);
+  }
+}
+
+uint HNode::HNODE_CNT = 0;
+
+// for high-level
+HNode::HNode(const Config& _C, DistTable& D, HNode* _parent, const uint _g,
+             const uint _h)
+    : C(_C),
+      parent(_parent),
+      neighbor(),
+      g(_g),
+      h(_h),
+      f(g + h),
+      priorities(C.size()),
+      order(C.size(), 0),
+      search_tree(std::queue<LNode*>())
+{
+  ++HNODE_CNT;
+
+  search_tree.push(new LNode());
+  const auto N = C.size();
+
+  // update neighbor
+  if (parent != nullptr) parent->neighbor.insert(this);
+
+  // set priorities
+  if (parent == nullptr) {
+    // initialize
+    for (uint i = 0; i < N; ++i) priorities[i] = (float)D.get(i, C[i]) / N;
+  } else {
+    // dynamic priorities, akin to PIBT
+    for (size_t i = 0; i < N; ++i) {
+      if (D.get(i, C[i]) != 0) {
+        priorities[i] = parent->priorities[i] + 1;
+      } else {
+        priorities[i] = parent->priorities[i] - (int)parent->priorities[i];
+      }
+    }
+  }
+
+  // set order
+  std::iota(order.begin(), order.end(), 0);
+  std::sort(order.begin(), order.end(),
+            [&](uint i, uint j) { return priorities[i] > priorities[j]; });
+}
+
+HNode::~HNode()
+{
+  while (!search_tree.empty()) {
+    delete search_tree.front();
+    search_tree.pop();
+  }
+}
+
 Planner::Planner(const Instance* _ins, const Deadline* _deadline,
                  std::mt19937* _MT, const int _verbose,
                  const Objective _objective, const float _restart_rate)
@@ -19,18 +82,16 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
       occupied_now(V_size, nullptr),
       occupied_next(V_size, nullptr)
 {
-  // setup agents
-  for (uint i = 0; i < N; ++i) A[i] = new Agent(i);
 }
 
-Planner::~Planner()
-{
-  for (auto a : A) delete a;
-}
+Planner::~Planner() {}
 
 Solution Planner::solve(std::string& additional_info)
 {
   solver_info(1, "start search");
+
+  // setup agents
+  for (auto i = 0; i < N; ++i) A[i] = new Agent(i);
 
   auto OPEN = std::stack<HNode*>();
   auto EXPLORED = std::unordered_map<Config, HNode*, ConfigHasher>();
@@ -131,6 +192,7 @@ Solution Planner::solve(std::string& additional_info)
   additional_info += "num_node_gen=" + std::to_string(EXPLORED.size()) + "\n";
 
   // memory management
+  for (auto a : A) delete a;
   for (auto itr : EXPLORED) delete itr.second;
 
   return solution;
@@ -404,12 +466,4 @@ std::ostream& operator<<(std::ostream& os, const Objective obj)
     os << "sum_of_loss";
   }
   return os;
-}
-
-Solution solve(const Instance& ins, std::string& additional_info,
-               const int verbose, const Deadline* deadline, std::mt19937* MT,
-               const Objective objective, const float restart_rate)
-{
-  auto planner = Planner(&ins, deadline, MT, verbose, objective, restart_rate);
-  return planner.solve(additional_info);
 }

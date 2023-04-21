@@ -1,5 +1,5 @@
 #include <argparse/argparse.hpp>
-#include <lacam.hpp>
+#include <lacam2.hpp>
 
 int main(int argc, char* argv[])
 {
