@@ -65,14 +65,16 @@ struct Planner {
   void expand_lowlevel_tree(HNode* H, LNode* L);
   void rewrite(HNode* S, HNode* T);
   uint get_edge_cost(const Config& C1, const Config& C2);
-  uint get_edge_cost(HNode* S, HNode* T);
+  uint get_edge_cost(HNode* H_from, HNode* H_to);
   uint get_h_value(const Config& C);
   bool get_new_config(HNode* S, LNode* M);
-  bool funcPIBT(Agent* ai, Agent* aj = nullptr);
+  bool funcPIBT(Agent* ai);
 
   // swap operation
-  bool is_swap_required(uint id_h, uint id_l, Vertex* v_now_h, Vertex* v_now_l);
-  bool is_pullable(Vertex* v_now, Vertex* v_opposite);
+  Agent* swap_possible_and_required(Agent* ai);
+  bool is_swap_required(const uint pusher, const uint puller,
+                        Vertex* v_pusher_origin, Vertex* v_puller_origin);
+  bool is_swap_possible(Vertex* v_pusher_origin, Vertex* v_puller_origin);
 
   // utilities
   void update_hist();
