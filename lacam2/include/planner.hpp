@@ -42,8 +42,8 @@ struct Planner {
   const uint V_size;  // number o vertices
   DistTable D;
   std::stack<HNode*> OPEN;
-  std::unordered_map<Config, HNode*, ConfigHasher> CLOSED;
-  HNode* S_goal;                    // auxiliary, goal node
+  std::unordered_map<Config, HNode*, ConfigHasher> EXPLORED;
+  HNode* H_goal;                    // auxiliary, goal node
   uint loop_cnt;                    // auxiliary
   Candidates C_next;                // used in PIBT
   std::vector<float> tie_breakers;  // random values, used in PIBT
@@ -62,7 +62,7 @@ struct Planner {
           const float _restart_rate = 0.001);
   ~Planner();
   Solution solve(std::string& additional_info);
-  void expand_lowlevel_tree(HNode* S, LNode* M);
+  void expand_lowlevel_tree(HNode* H, LNode* L);
   void rewrite(HNode* S, HNode* T);
   uint get_edge_cost(const Config& C1, const Config& C2);
   uint get_edge_cost(HNode* S, HNode* T);

@@ -13,8 +13,8 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
       V_size(ins->G.size()),
       D(DistTable(ins)),
       OPEN(std::stack<HNode*>()),
-      CLOSED(std::unordered_map<Config, HNode*, ConfigHasher>()),
-      S_goal(nullptr),
+      EXPLORED(std::unordered_map<Config, HNode*, ConfigHasher>()),
+      H_goal(nullptr),
       loop_cnt(0),
       C_next(Candidates(N, std::array<Vertex*, 5>())),
       tie_breakers(std::vector<float>(V_size, 0)),
@@ -30,7 +30,7 @@ Planner::~Planner()
 {
   // memory management
   for (auto a : A) delete a;
-  for (auto p : CLOSED) delete p.second;
+  for (auto p : EXPLORED) delete p.second;
 }
 
 Solution Planner::solve(std::string& additional_info)
@@ -38,9 +38,9 @@ Solution Planner::solve(std::string& additional_info)
   solver_info(1, "start search");
 
   // insert initial node
-  auto S_init = new HNode(ins->starts, D, nullptr, 0, get_h_value(ins->starts));
-  OPEN.push(S_init);
-  CLOSED[S_init->C] = S_init;
+  auto H_init = new HNode(ins->starts, D, nullptr, 0, get_h_value(ins->starts));
+  OPEN.push(H_init);
+  EXPLORED[H_init->C] = H_init;
 
   // BFS
   std::vector<Config> solution;
@@ -50,74 +50,74 @@ Solution Planner::solve(std::string& additional_info)
     loop_cnt += 1;
 
     // do not pop here!
-    auto S = OPEN.top();
+    auto H = OPEN.top();  // high-level node
 
     // low-level search end
-    if (S->search_tree.empty()) {
+    if (H->search_tree.empty()) {
       OPEN.pop();
       continue;
     }
 
     // check lower bounds
-    if (S_goal != nullptr && S->f >= S_goal->f) {
+    if (H_goal != nullptr && H->f >= H_goal->f) {
       OPEN.pop();
       continue;
     }
 
     // check goal condition
-    if (S_goal == nullptr && is_same_config(S->C, ins->goals)) {
-      S_goal = S;
-      solver_info(1, "found solution, cost: ", S->g);
+    if (H_goal == nullptr && is_same_config(H->C, ins->goals)) {
+      H_goal = H;
+      solver_info(1, "found solution, cost: ", H->g);
       update_hist();
       if (objective == OBJ_NONE) break;
       continue;
     }
 
     // create successors at the low-level search
-    auto M = S->search_tree.front();
-    S->search_tree.pop();
-    expand_lowlevel_tree(S, M);
+    auto L = H->search_tree.front();
+    H->search_tree.pop();
+    expand_lowlevel_tree(H, L);
 
     // create successors at the high-level search
-    const auto res = get_new_config(S, M);
-    delete M;  // free
+    const auto res = get_new_config(H, L);
+    delete L;  // free
     if (!res) continue;
 
     // create new configuration
     for (auto a : A) C_new[a->id] = a->v_next;
 
     // check explored list
-    const auto iter = CLOSED.find(C_new);
-    if (iter != CLOSED.end()) {
+    const auto iter = EXPLORED.find(C_new);
+    if (iter != EXPLORED.end()) {
       // case found
-      rewrite(S, iter->second);
+      rewrite(H, iter->second);
       // re-insert or random-restart
       auto T = (MT != nullptr && get_random_float(MT) >= RESTART_RATE)
                    ? iter->second
-                   : S_init;
-      if (S_goal == nullptr || T->f < S_goal->f) OPEN.push(T);
+                   : H_init;
+      if (H_goal == nullptr || T->f < H_goal->f) OPEN.push(T);
     } else {
       // insert new search node
-      const auto S_new = new HNode(
-          C_new, D, S, S->g + get_edge_cost(S->C, C_new), get_h_value(C_new));
-      CLOSED[S_new->C] = S_new;
-      if (S_goal == nullptr || S_new->f < S_goal->f) OPEN.push(S_new);
+      const auto H_new = new HNode(
+          C_new, D, H, H->g + get_edge_cost(H->C, C_new), get_h_value(C_new));
+      EXPLORED[H_new->C] = H_new;
+      if (H_goal == nullptr || H_new->f < H_goal->f) OPEN.push(H_new);
     }
   }
 
   // backtrack
-  if (S_goal != nullptr) {
-    auto S = S_goal;
-    while (S != nullptr) {
-      solution.push_back(S->C);
-      S = S->parent;
+  if (H_goal != nullptr) {
+    auto H = H_goal;
+    while (H != nullptr) {
+      solution.push_back(H->C);
+      H = H->parent;
     }
     std::reverse(solution.begin(), solution.end());
   }
 
-  if (S_goal != nullptr && OPEN.empty()) {
+  if (H_goal != nullptr && OPEN.empty()) {
     solver_info(1, "solved optimally, objective: ", objective);
-  } else if (S_goal != nullptr) {
+  } else if (H_goal != nullptr) {
     solver_info(1, "solved sub-optimally, objective: ", objective);
   } else if (OPEN.empty()) {
     solver_info(1, "no solution");
@@ -127,10 +127,10 @@ Solution Planner::solve(std::string& additional_info)
 
   // logging
   additional_info +=
-      "optimal=" + std::to_string(S_goal != nullptr && OPEN.empty()) + "\n";
+      "optimal=" + std::to_string(H_goal != nullptr && OPEN.empty()) + "\n";
   additional_info += "objective=" + std::to_string(objective) + "\n";
   additional_info += "loop_cnt=" + std::to_string(loop_cnt) + "\n";
-  additional_info += "num_node_gen=" + std::to_string(CLOSED.size()) + "\n";
+  additional_info += "num_node_gen=" + std::to_string(EXPLORED.size()) + "\n";
   update_hist();
   additional_info += "hist_cost=";
   for (auto c : hist_cost) additional_info += std::to_string(c) + ",";
@@ -160,13 +160,13 @@ void Planner::rewrite(HNode* S, HNode* T)
       if (U == S && W != T) continue;  // skip redundant check
       auto c = U->g + get_edge_cost(U, W);
       if (c < W->g) {
-        if (W == S_goal) solver_info(1, "cost update: ", W->g, " -> ", c);
+        if (W == H_goal) solver_info(1, "cost update: ", W->g, " -> ", c);
         W->g = c;
         W->f = W->g + W->h;
         W->parent = U;
         Q.push(W);
-        if (W == S_goal) update_hist();
-        if (S_goal != nullptr && W->f < S_goal->f) OPEN.push(W);
+        if (W == H_goal) update_hist();
+        if (H_goal != nullptr && W->f < H_goal->f) OPEN.push(W);
       }
     }
   }
@@ -204,26 +204,26 @@ uint Planner::get_h_value(const Config& C)
   return cost;
 }
 
-void Planner::expand_lowlevel_tree(HNode* S, LNode* M)
+void Planner::expand_lowlevel_tree(HNode* H, LNode* L)
 {
-  if (M->depth >= N) return;
-  const auto i = S->order[M->depth];
-  auto C = S->C[i]->neighbor;
-  C.push_back(S->C[i]);
+  if (L->depth >= N) return;
+  const auto i = H->order[L->depth];
+  auto C = H->C[i]->neighbor;
+  C.push_back(H->C[i]);
   // randomize
   if (MT != nullptr) std::shuffle(C.begin(), C.end(), *MT);
   // insert
-  for (auto v : C) S->search_tree.push(new LNode(M, i, v));
+  for (auto v : C) H->search_tree.push(new LNode(L, i, v));
 }
 
 void Planner::update_hist()
 {
-  if (S_goal == nullptr) return;
-  hist_cost.push_back(S_goal->g);
+  if (H_goal == nullptr) return;
+  hist_cost.push_back(H_goal->g);
   hist_time.push_back(elapsed_ms(deadline));
 }
 
-bool Planner::get_new_config(HNode* S, LNode* M)
+bool Planner::get_new_config(HNode* H, LNode* L)
 {
   // setup cache
   for (auto a : A) {
@@ -237,30 +237,30 @@ bool Planner::get_new_config(HNode* S, LNode* M)
     }
 
     // set occupied now
-    a->v_now = S->C[a->id];
+    a->v_now = H->C[a->id];
     occupied_now[a->v_now->id] = a;
   }
 
   // add constraints
-  for (uint k = 0; k < M->depth; ++k) {
-    const auto i = M->who[k];        // agent
-    const auto l = M->where[k]->id;  // loc
+  for (uint k = 0; k < L->depth; ++k) {
+    const auto i = L->who[k];        // agent
+    const auto l = L->where[k]->id;  // loc
 
     // check vertex collision
     if (occupied_next[l] != nullptr) return false;
     // check swap collision
-    auto l_pre = S->C[i]->id;
+    auto l_pre = H->C[i]->id;
     if (occupied_next[l_pre] != nullptr && occupied_now[l] != nullptr &&
         occupied_next[l_pre]->id == occupied_now[l]->id)
       return false;
 
     // set occupied_next
-    A[i]->v_next = M->where[k];
+    A[i]->v_next = L->where[k];
     occupied_next[l] = A[i];
   }
 
   // perform PIBT
-  for (auto k : S->order) {
+  for (auto k : H->order) {
     auto a = A[k];
     if (a->v_next == nullptr && !funcPIBT(a)) return false;  // planning failure
   }
