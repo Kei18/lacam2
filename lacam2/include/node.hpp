@@ -11,15 +11,17 @@
 // high-level node
 struct HNode {
   static uint HNODE_CNT;  // for id
-  const uint id;          // used in neighbor
   const Config C;
+
   // tree
   HNode* parent;
-  std::unordered_map<uint, HNode*> neighbor;
+  std::set<HNode*> neighbor;
+
   // costs
   uint g;
   const uint h;
   uint f;
+
   // for low-level search
   std::vector<float> priorities;
   std::vector<uint> order;

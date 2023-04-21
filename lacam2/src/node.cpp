@@ -5,10 +5,9 @@ uint HNode::HNODE_CNT = 0;
 // for high-level
 HNode::HNode(const Config& _C, DistTable& D, HNode* _parent, const uint _g,
              const uint _h)
-    : id(++HNODE_CNT),
-      C(_C),
+    : C(_C),
       parent(_parent),
-      neighbor(std::unordered_map<uint, HNode*>()),
+      neighbor(),
       g(_g),
       h(_h),
       f(g + h),
@@ -16,14 +15,13 @@ HNode::HNode(const Config& _C, DistTable& D, HNode* _parent, const uint _g,
       order(C.size(), 0),
       search_tree(std::queue<LNode*>())
 {
+  ++HNODE_CNT;
+
   search_tree.push(new LNode());
   const auto N = C.size();
 
   // update neighbor
-  if (parent != nullptr) {
-    parent->neighbor[id] = this;
-    neighbor[parent->id] = parent;
-  }
+  if (parent != nullptr) parent->neighbor.insert(this);
 
   // set priorities
   if (parent == nullptr) {

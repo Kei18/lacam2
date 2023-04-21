@@ -12,15 +12,12 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
       N(ins->N),
       V_size(ins->G.size()),
       D(DistTable(ins)),
-      OPEN(std::stack<HNode*>()),
-      EXPLORED(std::unordered_map<Config, HNode*, ConfigHasher>()),
-      H_goal(nullptr),
       loop_cnt(0),
-      C_next(Candidates(N, std::array<Vertex*, 5>())),
-      tie_breakers(std::vector<float>(V_size, 0)),
-      A(Agents(N, nullptr)),
-      occupied_now(Agents(V_size, nullptr)),
-      occupied_next(Agents(V_size, nullptr))
+      C_next(N),
+      tie_breakers(V_size, 0),
+      A(N, nullptr),
+      occupied_now(V_size, nullptr),
+      occupied_next(V_size, nullptr)
 {
   // setup agents
   for (uint i = 0; i < N; ++i) A[i] = new Agent(i);
@@ -28,14 +25,15 @@ Planner::Planner(const Instance* _ins, const Deadline* _deadline,
 
 Planner::~Planner()
 {
-  // memory management
   for (auto a : A) delete a;
-  for (auto p : EXPLORED) delete p.second;
 }
 
 Solution Planner::solve(std::string& additional_info)
 {
   solver_info(1, "start search");
+
+  auto OPEN = std::stack<HNode*>();
+  auto EXPLORED = std::unordered_map<Config, HNode*, ConfigHasher>();
 
   // insert initial node, 'H': high-level node
   auto H_init = new HNode(ins->starts, D, nullptr, 0, get_h_value(ins->starts));
@@ -45,6 +43,7 @@ Solution Planner::solve(std::string& additional_info)
   // BFS
   std::vector<Config> solution;
   auto C_new = Config(N, nullptr);  // new configuration
+  HNode* H_goal = nullptr;          // goal node
 
   while (!OPEN.empty() && !is_expired(deadline)) {
     loop_cnt += 1;
@@ -68,7 +67,6 @@ Solution Planner::solve(std::string& additional_info)
     if (H_goal == nullptr && is_same_config(H->C, ins->goals)) {
       H_goal = H;
       solver_info(1, "found solution, cost: ", H->g);
-      update_hist();
       if (objective == OBJ_NONE) break;
       continue;
     }
@@ -90,7 +88,7 @@ Solution Planner::solve(std::string& additional_info)
     const auto iter = EXPLORED.find(C_new);
     if (iter != EXPLORED.end()) {
       // case found
-      rewrite(H, iter->second);
+      rewrite(H, iter->second, H_goal, OPEN);
       // re-insert or random-restart
       auto H_insert = (MT != nullptr && get_random_float(MT) >= RESTART_RATE)
                           ? iter->second
@@ -131,42 +129,34 @@ Solution Planner::solve(std::string& additional_info)
   additional_info += "objective=" + std::to_string(objective) + "\n";
   additional_info += "loop_cnt=" + std::to_string(loop_cnt) + "\n";
   additional_info += "num_node_gen=" + std::to_string(EXPLORED.size()) + "\n";
-  update_hist();
-  additional_info += "hist_cost=";
-  for (auto c : hist_cost) additional_info += std::to_string(c) + ",";
-  additional_info += "\nhist_time=";
-  for (auto c : hist_time) additional_info += std::to_string(c) + ",";
-  additional_info += "\n";
+
+  // memory management
+  for (auto itr : EXPLORED) delete itr.second;
 
   return solution;
 }
 
-void Planner::rewrite(HNode* H_from, HNode* T)
+void Planner::rewrite(HNode* H_from, HNode* H_to, HNode* H_goal,
+                      std::stack<HNode*>& OPEN)
 {
-  H_from->neighbor[T->id] = T;
-  T->neighbor[H_from->id] = H_from;  // since the graph is undirected
-  auto c = H_from->g + get_edge_cost(H_from, T);
-  if (c >= T->g) return;             // no need to update costs
-
   // update neighbors
-  // in this implementation, BFS is sufficient rather than Dijkstra
-  std::queue<HNode*> Q;
-  Q.push(H_from);
+  H_from->neighbor.insert(H_to);
+
+  // Dijkstra update
+  std::queue<HNode*> Q({H_from});  // queue is sufficient
   while (!Q.empty()) {
-    auto U = Q.front();
+    auto n_from = Q.front();
     Q.pop();
-    for (auto iter : U->neighbor) {
-      auto W = iter.second;
-      if (U == H_from && W != T) continue;  // skip redundant check
-      auto c = U->g + get_edge_cost(U, W);
-      if (c < W->g) {
-        if (W == H_goal) solver_info(1, "cost update: ", W->g, " -> ", c);
-        W->g = c;
-        W->f = W->g + W->h;
-        W->parent = U;
-        Q.push(W);
-        if (W == H_goal) update_hist();
-        if (H_goal != nullptr && W->f < H_goal->f) OPEN.push(W);
+    for (auto n_to : n_from->neighbor) {
+      auto g_val = n_from->g + get_edge_cost(n_from->C, n_to->C);
+      if (g_val < n_to->g) {
+        if (n_to == H_goal)
+          solver_info(1, "cost update: ", n_to->g, " -> ", g_val);
+        n_to->g = g_val;
+        n_to->f = n_to->g + n_to->h;
+        n_to->parent = n_from;
+        Q.push(n_to);
+        if (H_goal != nullptr && n_to->f < H_goal->f) OPEN.push(n_to);
       }
     }
   }
@@ -214,13 +204,6 @@ void Planner::expand_lowlevel_tree(HNode* H, LNode* L)
   if (MT != nullptr) std::shuffle(C.begin(), C.end(), *MT);
   // insert
   for (auto v : C) H->search_tree.push(new LNode(L, i, v));
-}
-
-void Planner::update_hist()
-{
-  if (H_goal == nullptr) return;
-  hist_cost.push_back(H_goal->g);
-  hist_time.push_back(elapsed_ms(deadline));
 }
 
 bool Planner::get_new_config(HNode* H, LNode* L)
@@ -313,9 +296,9 @@ bool Planner::funcPIBT(Agent* ai)
       continue;
 
     // success to plan next one step
+    // pull swap_agent when applicable
     if (k == 0 && swap_agent != nullptr && swap_agent->v_next == nullptr &&
         occupied_next[ai->v_now->id] == nullptr) {
-      // pull swap_agent
       swap_agent->v_next = ai->v_now;
       occupied_next[swap_agent->v_next->id] = swap_agent;
     }

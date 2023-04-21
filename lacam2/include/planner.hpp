@@ -20,9 +20,6 @@ struct Agent {
 };
 using Agents = std::vector<Agent*>;
 
-// next location candidates, for saving memory allocation
-using Candidates = std::vector<std::array<Vertex*, 5> >;
-
 // objective function
 enum Objective { OBJ_NONE, OBJ_MAKESPAN, OBJ_SUM_OF_LOSS };
 std::ostream& operator<<(std::ostream& os, const Objective objective);
@@ -41,19 +38,13 @@ struct Planner {
   const uint N;       // number of agents
   const uint V_size;  // number o vertices
   DistTable D;
-  std::stack<HNode*> OPEN;
-  std::unordered_map<Config, HNode*, ConfigHasher> EXPLORED;
-  HNode* H_goal;                    // auxiliary, goal node
-  uint loop_cnt;                    // auxiliary
-  Candidates C_next;                // used in PIBT
-  std::vector<float> tie_breakers;  // random values, used in PIBT
+  uint loop_cnt;      // auxiliary
+  // next location candidates, for saving memory allocation
+  std::vector<std::array<Vertex*, 5> > C_next;  // used in PIBT
+  std::vector<float> tie_breakers;              // random values, used in PIBT
   Agents A;
-  Agents occupied_now;              // for quick collision checking
-  Agents occupied_next;             // for quick collision checking
-
-  // for logging
-  std::vector<int> hist_cost;
-  std::vector<int> hist_time;
+  Agents occupied_now;                          // for quick collision checking
+  Agents occupied_next;                         // for quick collision checking
 
   Planner(const Instance* _ins, const Deadline* _deadline, std::mt19937* _MT,
           const int _verbose = 0,
@@ -63,7 +54,8 @@ struct Planner {
   ~Planner();
   Solution solve(std::string& additional_info);
   void expand_lowlevel_tree(HNode* H, LNode* L);
-  void rewrite(HNode* S, HNode* T);
+  void rewrite(HNode* H_from, HNode* T, HNode* H_goal,
+               std::stack<HNode*>& OPEN);
   uint get_edge_cost(const Config& C1, const Config& C2);
   uint get_edge_cost(HNode* H_from, HNode* H_to);
   uint get_h_value(const Config& C);
@@ -77,7 +69,6 @@ struct Planner {
   bool is_swap_possible(Vertex* v_pusher_origin, Vertex* v_puller_origin);
 
   // utilities
-  void update_hist();
   template <typename... Body>
   void solver_info(const int level, Body&&... body)
   {
