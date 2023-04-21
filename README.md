@@ -45,7 +45,7 @@ solved: 31ms    makespan: 112 (lb=58, ub=1.94)  sum_of_costs: 31373 (lb=9217, ub
 makespan optimization:
 
 ```sh
-> build/main -m assets/loop.map -i assets/loop.scen -N 3 -v 2 --objective 1
+> build/main -m assets/loop.map -i assets/loop.scen -N 3 -v 1 --objective 1
 solved: 8ms     makespan: 10 (lb=2, ub=5)       sum_of_costs: 21 (lb=5, ub=4.2) sum_of_loss: 21 (lb=5, ub=4.2)
 ```
 
@@ -53,7 +53,7 @@ sum-of-loss optimization:
 
 ```sh
 > build/main -m assets/loop.map -i assets/loop.scen -N 3 -v 2 --objective 2
-solved: 0ms     makespan: 11 (lb=2, ub=5.5)     sum_of_costs: 23 (lb=5, ub=4.6) sum_of_loss: 19 (lb=5, ub=3.8)
+solved: 1ms     makespan: 11 (lb=2, ub=5.5)     sum_of_costs: 15 (lb=5, ub=3)   sum_of_loss: 15 (lb=5, ub=3)
 ```
 
 You can find details of all parameters with:
