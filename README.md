@@ -6,8 +6,7 @@ lacam2
 Do you want the power?
 LaCAM* could be the answer.
 
-- The code repository of the paper ["Improving LaCAM for Scalable Eventually Optimal Multi-Agent Pathfinding"](https://kei18.github.io/lacam2/) (IJCAI-23).
-- This repo is extended from [the LaCAM repo presented at AAAI-23](https://kei18.github.io/lacam/).
+This is a code repository of the paper ["Improving LaCAM for Scalable Eventually Optimal Multi-Agent Pathfinding"](https://kei18.github.io/lacam2/) (IJCAI-23), extended from from [the LaCAM repo](https://kei18.github.io/lacam/) presented at AAAI-23.
 
 ## Building
 
@@ -84,6 +83,8 @@ The evaluation starts by following commands.
 julia --project=scripts/ --threads=auto
 > include("scripts/eval.jl"); main("scripts/config/mapf-bench.yaml")
 ```
+
+LaCAM* variants are available in [tags](https://github.com/Kei18/lacam2/tags).
 
 ## Notes
 
