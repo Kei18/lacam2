@@ -12,20 +12,20 @@ twitter: _kei18
 authors:
   - name: Keisuke Okumura
     url: https://kei18.github.io/
-    # affiliation: |
-    #   National Institute of Advanced Technology and Science / University of Cambridge
+    affiliation: |
+      National Institute of Advanced Technology and Science (AIST) / University of Cambridge
 
 topLinks:
-  # - name: arXiv
-    # url: https://doi.org/10.1016/j.artint.2022.103752
+  - name: arXiv
+    url: https://arxiv.org/abs/2305.03632
 
 headerImage: concept
 headerDescription: |
   the original image by <a href="https://pixabay.com/users/openclipart-vectors-30363/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=2027200">OpenClipart-Vectors</a> from <a href="https://pixabay.com//?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=2027200">Pixabay</a>
 
-# subLinks:
-#   - name: code
-#     url: https://github.com/Kei18/lacam2
+subLinks:
+  - name: code
+    url: https://github.com/Kei18/lacam2
 
 otherLinks:
   - name: LaCAM (AAAI-23)
@@ -44,6 +44,8 @@ abstract: |
   First, we present its <span class="text-danger">anytime version called LaCAM*</span> which eventually converges to optima, provided solution costs are accumulated transition costs.
   Second, we <span class="text-danger">improve the successor generation</span> to quickly obtain initial solutions.
   Exhaustive experiments support their utility.
+  For instance, LaCAM* sub-optimally solved 99% of the instances retrieved from the MAPF benchmark, where the number of agents varied up to a thousand, within ten seconds on a standard desktop PC, while ensuring eventual convergence to optima;
+  developing a new horizon of MAPF algorithms.
   </p>
 
 performance:
@@ -80,6 +82,6 @@ citation: |-
   }
 
 contact: |-
-  okumura.k [at] aist.go.jp / keisuke.oku18 [at] gmail.com
+  ko393@cl.cam.ac.uk / okumura.k [at] aist.go.jp / keisuke.oku18 [at] gmail.com
 
 copyright: Keisuke Okumura
