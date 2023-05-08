@@ -16,7 +16,8 @@ authors:
       National Institute of Advanced Technology and Science (AIST) / University of Cambridge
 
 topLinks:
-  - name: arXiv
+  - name: |
+      paper: IJCAI-23 (in press)
     url: https://arxiv.org/abs/2305.03632
 
 headerImage: concept
