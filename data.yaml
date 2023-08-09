@@ -31,6 +31,8 @@ subLinks:
 otherLinks:
   - name: LaCAM (AAAI-23)
     url: https://kei18.github.io/lacam/
+  - name: LaCAM3
+    url: https://kei18.github.io/lacam3/
   - name: PIBT (AIJ-22)
     url: https://kei18.github.io/pibt2/
   - name: mapf-visualizer
@@ -64,8 +66,12 @@ performance:
 
 news:
   - body: |
+      The follow-up work is out on arXiv
+    url: https://kei18.github.io/lacam3/
+    date: Aug. 2023
+  - body: |
       The paper has been accepted to IJCAI-23!
-    url:
+    url: https://ijcai-23.org/
     date: Apr. 2023
 
 # video:
