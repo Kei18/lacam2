@@ -17,7 +17,10 @@ authors:
 
 topLinks:
   - name: |
-      paper: IJCAI-23 (in press)
+      IJCAI-23 paper
+    url: https://doi.org/10.24963/ijcai.2023/28
+  - name: |
+      preprint on arXiv
     url: https://arxiv.org/abs/2305.03632
 
 headerImage: concept
@@ -80,8 +83,6 @@ news:
 slides: https://speakerdeck.com/player/0294a6deacec477189b41e8eb2b9346b
 
 citation: |-
-  (in press)
-
   @inproceedings{okumura2023lacam2,
     title={Improving LaCAM for Scalable Eventually Optimal Multi-Agent Pathfinding},
     booktitle={Proceedings of the Thirty-First International Joint Conference on Artificial Intelligence (IJCAI)},
