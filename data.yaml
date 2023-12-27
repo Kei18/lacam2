@@ -28,19 +28,23 @@ headerDescription: |
   the original image by <a href="https://pixabay.com/users/openclipart-vectors-30363/?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=2027200">OpenClipart-Vectors</a> from <a href="https://pixabay.com//?utm_source=link-attribution&amp;utm_medium=referral&amp;utm_campaign=image&amp;utm_content=2027200">Pixabay</a>
 
 subLinks:
-  - name: code
+  - name: code (GitHub)
     url: https://github.com/Kei18/lacam2
 
 otherLinks:
   - name: LaCAM (AAAI-23)
     url: https://kei18.github.io/lacam/
-  - name: LaCAM3
+  - name: LaCAM3 (AAMAS-24)
     url: https://kei18.github.io/lacam3/
   - name: PIBT (AIJ-22)
     url: https://kei18.github.io/pibt2/
   - name: mapf-visualizer
     url: https://github.com/Kei18/mapf-visualizer
 
+demo:
+  - image: demo
+    description: |
+      Welcome to 10k-agents scale! (in seconds)
 
 abstract: |
   <p>
@@ -69,7 +73,14 @@ performance:
 
 news:
   - body: |
-      The follow-up work is out on arXiv
+      A minimum Python implementation is now available.
+    url: https://github.com/Kei18/py-lacam
+  - body: |
+      I gave a talk at the University of Cambridge based on this paper! The recording is available.
+    url: https://www.cl.cam.ac.uk/seminars/wednesday/video/20231101-1500-t204508.html106
+    date: Nov. 2023
+  - body: |
+      The follow-up work is out on arXiv -> accepted to AAMAS-24!
     url: https://kei18.github.io/lacam3/
     date: Aug. 2023
   - body: |
@@ -79,8 +90,11 @@ news:
 
 # video:
 
-# slides:
-slides: https://speakerdeck.com/player/0294a6deacec477189b41e8eb2b9346b
+slides:
+  - title: conference talk at IJCAI-23
+    url: https://speakerdeck.com/player/0294a6deacec477189b41e8eb2b9346b
+  - title: long talk at Cambridge (the second half is for PIBT/LaCAM*)
+    url: https://speakerdeck.com/player/af56076d88d4493eadb9134241a32f1e
 
 citation: |-
   @inproceedings{okumura2023lacam2,
@@ -91,6 +105,6 @@ citation: |-
   }
 
 contact: |-
-  ko393 [at] cl.cam.ac.uk
+  ko393 [at] cl.cam.ac.uk | okumura.k [at] aist.go.jp
 
 copyright: Keisuke Okumura

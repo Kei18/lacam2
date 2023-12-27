@@ -178,6 +178,41 @@ const App: React.SFC<{}> = () => {
             ""
           )}
 
+{data.demo ? (
+            <div className="mx-auto mt-5">
+              <p className="h5">Demo</p>
+              <div className="row">
+                {data.demo.map((item, i) => {
+                  return (
+                    <div key={i} className="col-ld text-left">
+                      {item.image && images_gif[item.image] ? (
+                        <img
+                          src={images_gif[item.image]}
+                          className="img-fluid"
+                          width="100%"
+                        />
+                      ) : (
+                        ""
+                      )}
+                      {item.image && images_png[item.image] ? (
+                        <img
+                          src={images_png[item.image]}
+                          className="img-fluid"
+                          width="100%"
+                        />
+                      ) : (
+                        ""
+                      )}
+                      {item.description ? <p>{item.description}</p> : ""}
+                      </div>
+                  );
+                })}
+    </div>
+        </div>
+) : (
+    ""
+)}
+
       {data.performance ? (
           <div className="mx-auto mt-5">
               <p className="h5">Performance</p>
@@ -222,14 +257,23 @@ const App: React.SFC<{}> = () => {
           {data.slides ? (
             <div className="mx-auto mt-5">
               <p className="h5">Slides</p>
-              <div className="slide-wrapper">
-                <iframe
-                  src={data.slides}
-                  allowFullScreen
-                  scrolling="no"
-                  allow="encrypted-media;"
-                ></iframe>
-              </div>
+                  <div>
+                  {
+                      data.slides.map((item, i) => (
+                          <div key={i} className="mb-5">
+                          <p>{item.title}</p>
+                          <div className="slide-wrapper">
+                              <iframe
+                          src={item.url}
+                          allowFullScreen
+                          scrolling="no"
+                          allow="encrypted-media;"
+                              ></iframe>
+                              </div>
+                              </div>
+                      ))
+                  }
+                  </div>
             </div>
           ) : (
             ""
