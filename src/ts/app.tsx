@@ -57,33 +57,35 @@ const App: React.SFC<{}> = () => {
                 if (item.url) {
                   return (
                     <div key={i} className="col-sm">
-                      <a href={item.url} className="h5">{item.name}</a>
-                          {item.affiliation
-                              ? (
-                                      <small>
-                                      <br />
-                                      <span className="text-secondary">
-                                      {item.affiliation}
-                                  </span>
-                                      </small>
-                              ) : ""
-                          }
+                      <a href={item.url} className="h5">
+                        {item.name}
+                      </a>
+                      {item.affiliation ? (
+                        <small>
+                          <br />
+                          <span className="text-secondary">
+                            {item.affiliation}
+                          </span>
+                        </small>
+                      ) : (
+                        ""
+                      )}
                     </div>
                   );
                 } else {
                   return (
                     <div key={i} className="col-sm">
                       <span className="h5">{item.name}</span>
-                          {item.affiliation
-                              ? (
-                                  <small>
-                                      <br />
-                                      <span className="text-secondary">
-                                      {item.affiliation}
-                                  </span>
-                                      </small>
-                              ) : ""
-                          }
+                      {item.affiliation ? (
+                        <small>
+                          <br />
+                          <span className="text-secondary">
+                            {item.affiliation}
+                          </span>
+                        </small>
+                      ) : (
+                        ""
+                      )}
                     </div>
                   );
                 }
@@ -117,14 +119,14 @@ const App: React.SFC<{}> = () => {
               ) : (
                 ""
               )}
-                          {data.headerDescription ? (
-                              <div
-                                  className="text-secondary text-center"
-                                  dangerouslySetInnerHTML={{ __html: data.headerDescription }}
-                              ></div>
-                          ) : (
-                              ""
-                          )}
+              {data.headerDescription ? (
+                <div
+                  className="text-secondary text-center"
+                  dangerouslySetInnerHTML={{ __html: data.headerDescription }}
+                ></div>
+              ) : (
+                ""
+              )}
             </div>
           ) : (
             ""
@@ -178,7 +180,7 @@ const App: React.SFC<{}> = () => {
             ""
           )}
 
-{data.demo ? (
+          {data.demo ? (
             <div className="mx-auto mt-5">
               <p className="h5">Demo</p>
               <div className="row">
@@ -204,37 +206,42 @@ const App: React.SFC<{}> = () => {
                         ""
                       )}
                       {item.description ? <p>{item.description}</p> : ""}
-                      </div>
+                    </div>
                   );
                 })}
-    </div>
-        </div>
-) : (
-    ""
-)}
+              </div>
+            </div>
+          ) : (
+            ""
+          )}
 
-      {data.performance ? (
-          <div className="mx-auto mt-5">
+          {data.performance ? (
+            <div className="mx-auto mt-5">
               <p className="h5">Performance</p>
               {images_png[data.performance.image] ? (
-                  <img src={images_png[data.performance.image]} className="img-fluid" />
+                <img
+                  src={images_png[data.performance.image]}
+                  className="img-fluid"
+                />
               ) : (
-                  ""
+                ""
               )}
-          {data.headerDescription ? (
-              <small>
-              <div
-              className="mt-3 text-secondary"
-              dangerouslySetInnerHTML={{ __html: data.performance.description }}
-                  ></div></small>
+              {data.headerDescription ? (
+                <small>
+                  <div
+                    className="mt-3 text-secondary"
+                    dangerouslySetInnerHTML={{
+                      __html: data.performance.description,
+                    }}
+                  ></div>
+                </small>
+              ) : (
+                ""
+              )}
+            </div>
           ) : (
-              ""
+            ""
           )}
-          </div>
-      ) : (
-          ""
-      )}
-
 
           {data.video ? (
             <div className="mx-auto mt-5">
@@ -257,23 +264,21 @@ const App: React.SFC<{}> = () => {
           {data.slides ? (
             <div className="mx-auto mt-5">
               <p className="h5">Slides</p>
-                  <div>
-                  {
-                      data.slides.map((item, i) => (
-                          <div key={i} className="mb-5">
-                          <p>{item.title}</p>
-                          <div className="slide-wrapper">
-                              <iframe
-                          src={item.url}
-                          allowFullScreen
-                          scrolling="no"
-                          allow="encrypted-media;"
-                              ></iframe>
-                              </div>
-                              </div>
-                      ))
-                  }
+              <div>
+                {data.slides.map((item, i) => (
+                  <div key={i} className="mb-5">
+                    <p>{item.title}</p>
+                    <div className="slide-wrapper">
+                      <iframe
+                        src={item.url}
+                        allowFullScreen
+                        scrolling="no"
+                        allow="encrypted-media;"
+                      ></iframe>
+                    </div>
                   </div>
+                ))}
+              </div>
             </div>
           ) : (
             ""
@@ -292,20 +297,20 @@ const App: React.SFC<{}> = () => {
             ""
           )}
 
-      {data.otherLinks ? (
-          <div className="mx-auto mt-5">
+          {data.otherLinks ? (
+            <div className="mx-auto mt-5">
               <p className="h5">Other Links</p>
               <ul>
-              {data.otherLinks.map((item, i) => (
+                {data.otherLinks.map((item, i) => (
                   <li key={i}>
-                      <a href={item.url}>{item.name}</a>
-                      </li>
-              ))}
-          </ul>
-              </div>
-      ) : (
-          ""
-      )}
+                    <a href={item.url}>{item.name}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            ""
+          )}
 
           {data.contact ? (
             <div className="mx-auto mt-5">
