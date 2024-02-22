@@ -38,11 +38,11 @@ Instance::Instance(const std::string& scen_filename,
       uint y_s = std::stoi(results[2].str());
       uint x_g = std::stoi(results[3].str());
       uint y_g = std::stoi(results[4].str());
-      if (x_s < 0 || G.width <= x_s || x_g < 0 || G.width <= x_g) continue;
-      if (y_s < 0 || G.height <= y_s || y_g < 0 || G.height <= y_g) continue;
+      if (x_s < 0 || G.width <= x_s || x_g < 0 || G.width <= x_g) break;
+      if (y_s < 0 || G.height <= y_s || y_g < 0 || G.height <= y_g) break;
       auto s = G.U[G.width * y_s + x_s];
       auto g = G.U[G.width * y_g + x_g];
-      if (s == nullptr || g == nullptr) continue;
+      if (s == nullptr || g == nullptr) break;
       starts.push_back(s);
       goals.push_back(g);
     }
