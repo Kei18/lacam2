@@ -88,6 +88,11 @@ news:
     url: https://ijcai-23.org/
     date: Apr. 2023
 
+errata:
+  - |
+    Algorithm 4, Line 7: The pseudocode is missing an additional collision checking of "not exists k s.t. Q^to[k] = Q^from[i]".
+    The actual code implements this check.
+
 # video:
 
 slides:
