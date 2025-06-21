@@ -16,6 +16,8 @@ authors:
       National Institute of Advanced Technology and Science (AIST) / University of Cambridge
 
 topLinks:
+  - name: LaCAM series
+    url: https://kei18.github.io/lacam-project/
   - name: |
       IJCAI-23 paper
     url: https://doi.org/10.24963/ijcai.2023/28
